@@ -254,8 +254,6 @@
 - (BOOL)deleteTableItem:(id)object withRowAnimation:(UITableViewRowAnimation)animation {
   NSIndexPath *indexPath = [self indexPathForTableItem:object];
   
-  NSAssert(indexPath, @"Attempting to delete table item not in the table: %@", object);
-  
   if (indexPath == nil) {
     // Can't find object, so it must be gone already. Nothing to do.
     return NO;
