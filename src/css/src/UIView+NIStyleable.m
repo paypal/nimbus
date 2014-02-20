@@ -994,7 +994,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
       id directiveValue = [kv objectForKey:NICSSViewKey];
       if (directiveValue) {
         [kv removeObjectForKey:NICSSViewKey];
-#ifdef NI_DYNAMIC_VIEWS
+
         // Let's see if this is a UIView subclass. If NOT, let the normal string property handling take over
         if ([directiveValue isKindOfClass:[NSString class]]) {
           id classFromString = [[NSClassFromString(directiveValue) alloc] init];
@@ -1027,7 +1027,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
           }
 #pragma clang diagnostic pop
         }
-#endif
+
         if ([directiveValue isKindOfClass:[UIView class]]) {
           active = [[NIPrivateViewInfo alloc] init];
           active.view = (UIView*) directiveValue;
@@ -1107,11 +1107,8 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
       directiveValue = [kv objectForKey:NICSSViewTargetSelectorKey];
       if (directiveValue) {
         [kv removeObjectForKey:NICSSViewTargetSelectorKey];
-        NSAssert([directiveValue isKindOfClass:[NSInvocation class]] || [directiveValue isKindOfClass:[NSString class]], @"NICSSViewTargetSelectorKey must be an NSInvocation*, or an NSString* if you're adventurous and NI_DYNAMIC_VIEWS is defined.");
+        NSAssert([directiveValue isKindOfClass:[NSInvocation class]] || [directiveValue isKindOfClass:[NSString class]], @"NICSSViewTargetSelectorKey must be an NSInvocation* or an NSString*.");
         
-#ifdef NI_DYNAMIC_VIEWS
-        // NSSelectorFromString has Apple rejection written all over it, even though it's documented. Since its intended
-        // use is primarily rapid development right now, use the #ifdef to turn it on.
         if ([directiveValue isKindOfClass:[NSString class]]) {
           // Let's make an invocation out of this puppy.
           @try {
@@ -1124,7 +1121,6 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
 #endif
           }
         }
-#endif
         
         if ([directiveValue isKindOfClass:[NSInvocation class]]) {
           NSInvocation *n = (NSInvocation*) directiveValue;
