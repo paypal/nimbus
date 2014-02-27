@@ -106,6 +106,13 @@ static id<NICSSResourceResolverDelegate> _resolver;
     }
   }
 
+  // Poor mans importance sorting of selectors
+  [significantScopeToScopes enumerateKeysAndObjectsUsingBlock:^(NSString *significantScope, NSMutableArray *scopes, BOOL *stop) {
+    [scopes sortUsingComparator:^NSComparisonResult(NICSSScopeDefinition* scope1, NICSSScopeDefinition *scope2) {
+      return scope1.orderedList.count - scope2.orderedList.count;
+    }];
+  }];
+
   _significantScopeToScopes = [significantScopeToScopes copy];
 }
 
@@ -314,19 +321,6 @@ static NSMutableArray * matchingSelectors;
             }
         }
     }
-  }
-  // Poor mans importance sorting of selectors
-  if (matchingSelectors.count > 1) {
-    return [self rulesetWithSelectors:[matchingSelectors sortedArrayUsingComparator:^NSComparisonResult(NSString* sel1, NSString *sel2) {
-      int count1=0, count2=0;
-      for (int i = 0, len = sel1.length; i<len; i++) {
-        if (isspace([sel1 characterAtIndex:i])) { count1++; }
-      }
-      for (int i = 0, len = sel2.length; i<len; i++) {
-        if (isspace([sel2 characterAtIndex:i])) { count2++; }
-      }
-      return count1-count2;
-    }]];
   }
   return [self rulesetWithSelectors:matchingSelectors];
 }
