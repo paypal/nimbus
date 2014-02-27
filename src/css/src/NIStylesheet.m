@@ -58,28 +58,6 @@ static id<NICSSResourceResolverDelegate> _resolver;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)dealloc {
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (id)init {
-  if ((self = [super init])) {
-    _ruleSets = [[NSMutableDictionary alloc] init];
-
-    NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
-    [nc addObserver: self
-           selector: @selector(didReceiveMemoryWarning:)
-               name: UIApplicationDidReceiveMemoryWarningNotification
-             object: nil];
-  }
-
-  return self;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Rule Sets
 
@@ -144,18 +122,6 @@ static id<NICSSResourceResolverDelegate> _resolver;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)reduceMemory {
-  _ruleSets = [[NSMutableDictionary alloc] init];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)didReceiveMemoryWarning:(void*)object {
-  [self reduceMemory];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Public Methods
 
@@ -181,8 +147,6 @@ static id<NICSSResourceResolverDelegate> _resolver;
   @synchronized(self) {
     _rawRulesets = nil;
     _significantScopeToScopes = nil;
-
-    _ruleSets = [[NSMutableDictionary alloc] init];
 
     NICSSParser* parser = [[NICSSParser alloc] init];
 
@@ -246,26 +210,6 @@ static id<NICSSResourceResolverDelegate> _resolver;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSString*)descriptionForView:(UIView *)view withClassName:(NSString *)className inDOM:(NIDOM *)dom andViewName:(NSString *)viewName {
-  NSMutableString *description = [[NSMutableString alloc] init];
-  
-  NICSSRuleset *ruleset = [self rulesetForView: (UIView*) view withClassName:className inDOM:dom];
-  if (nil != ruleset) {
-    NSRange r = [className rangeOfString:@":"];
-    if ([view respondsToSelector:@selector(descriptionWithRuleSet:forPseudoClass:inDOM:withViewName:)]) {
-      if (r.location != NSNotFound) {
-        [description appendString:[(id<NIStyleable>)view descriptionWithRuleSet:ruleset forPseudoClass:[className substringFromIndex:r.location+1] inDOM:dom withViewName:viewName]];
-      } else {
-        [description appendString:[(id<NIStyleable>)view descriptionWithRuleSet:ruleset forPseudoClass:nil inDOM:dom withViewName:viewName]];
-      }
-    } else {
-      [description appendFormat:@"// Description not supported for %@ with selector %@\n", view, className];
-    }
-  }
-  return description;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Applying Styles to Views
 
@@ -277,20 +221,28 @@ static id<NICSSResourceResolverDelegate> _resolver;
   }
 }
 
-- (void)applyStyleToView:(UIView *)view withClassName:(NSString *)className inDOM:(NIDOM *)dom {
-  NICSSRuleset *ruleset = [self rulesetForView: (UIView*) view withClassName:className inDOM:dom];
-  if (nil != ruleset) {
-    NSRange r = [className rangeOfString:@":"];
-    if (r.location != NSNotFound && [view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
-      [(id<NIStyleable>)view applyStyleWithRuleSet:ruleset forPseudoClass: [className substringFromIndex:r.location+1] inDOM:dom];
-    } else {
-      [self applyRuleSet:ruleset toView:view inDOM:dom];
+
+- (void)applyStyleToView:(UIView *)view withSelectors:(NSArray *)selectors andPseudoSelectors:(NSArray *)pseudoSelectors inDOM:(NIDOM *)dom {
+  NICSSRuleset *ruleset = [self rulesetForView:view withSelectors:selectors inDOM:dom];
+  if (ruleset) {
+    [self applyRuleSet:ruleset toView:view inDOM:dom];
+  }
+
+  for (NSString *pseudoSelector in pseudoSelectors) {
+    if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
+      NSRange r = [pseudoSelector rangeOfString:@":"];
+      NICSSRuleset *pseudoRuleset = [self rulesetForView:view withSelectors:@[pseudoSelector] inDOM:dom];
+      if (pseudoRuleset) {
+        [(id<NIStyleable>)view applyStyleWithRuleSet:pseudoRuleset
+                                      forPseudoClass:[pseudoSelector substringFromIndex:r.location+1]
+                                               inDOM:dom];
+      }
     }
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NICSSRuleset*) addSelectors: (NSArray*) selectors forClassName: (NSString*) className
+- (NICSSRuleset*) rulesetWithSelectors: (NSArray*) selectors
 {
   if ([selectors count] > 0) {
     // Gather all of the rule sets for this view into a composite rule set.
@@ -302,9 +254,6 @@ static id<NICSSResourceResolverDelegate> _resolver;
       [ruleSet addEntriesFromDictionary:[_rawRulesets objectForKey:selector]];
     }
     
-    NIDASSERT(nil != _ruleSets);
-    [_ruleSets setObject:ruleSet forKey:className];
-
     return ruleSet;
   }
   
@@ -313,20 +262,22 @@ static id<NICSSResourceResolverDelegate> _resolver;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (NICSSRuleset *)rulesetForClassName:(NSString *)className {
-  return [self addSelectors: @[className] forClassName:className];
+  return [self rulesetWithSelectors: @[className]];
 }
 
 static NSMutableArray * matchingSelectors;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NICSSRuleset*) rulesetForView: (UIView*) view withClassName: (NSString*) className inDOM: (NIDOM*) dom {
-    
+- (NICSSRuleset*) rulesetForView: (UIView*) view withSelectors: (NSArray*) shortSelectors inDOM: (NIDOM*) dom {
+
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         matchingSelectors = [NSMutableArray array];
     });
     [matchingSelectors removeAllObjects];
 
-    NSArray* selectors = [_significantScopeToScopes objectForKey:className];
+  for (NSString *selector in shortSelectors) {
+
+    NSArray* selectors = [_significantScopeToScopes objectForKey:selector];
 
     for (NICSSScopeDefinition *sd in selectors) {
         if (sd.orderedList == nil || sd.orderedList.count == 1) {
@@ -363,9 +314,10 @@ static NSMutableArray * matchingSelectors;
             }
         }
     }
+  }
   // Poor mans importance sorting of selectors
   if (matchingSelectors.count > 1) {
-    return [self addSelectors: [matchingSelectors sortedArrayUsingComparator:^NSComparisonResult(NSString* sel1, NSString *sel2) {
+    return [self rulesetWithSelectors:[matchingSelectors sortedArrayUsingComparator:^NSComparisonResult(NSString* sel1, NSString *sel2) {
       int count1=0, count2=0;
       for (int i = 0, len = sel1.length; i<len; i++) {
         if (isspace([sel1 characterAtIndex:i])) { count1++; }
@@ -374,9 +326,9 @@ static NSMutableArray * matchingSelectors;
         if (isspace([sel2 characterAtIndex:i])) { count2++; }
       }
       return count1-count2;
-    }] forClassName:className];
+    }]];
   }
-  return [self addSelectors:matchingSelectors forClassName:className];
+  return [self rulesetWithSelectors:matchingSelectors];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

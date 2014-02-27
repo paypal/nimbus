@@ -49,14 +49,6 @@ extern NSString* const NICSSViewHiddenKey; // hidden
 - (void)applyViewStyleWithRuleSet:(NICSSRuleset *)ruleSet inDOM: (NIDOM*) dom;
 
 /**
- * Describes the given rule set when applied to this view.
- *
- * This method is exposed primarily for subclasses to use when implementing the
- * descriptionWithRuleSetFor:forPseudoClass:inDOM:withViewName: method from NIStyleable.
- */
-- (NSString*) descriptionWithRuleSetForView: (NICSSRuleset*) ruleSet forPseudoClass: (NSString*) pseudo inDOM: (NIDOM*) dom withViewName: (NSString*) name;
-
-/**
  * Build a view hierarchy. The array is a list of view specs, where viewSpec is a loosely formatted
  * sequence delineated by UIViews. After a UIView, the type of the next object determines what is done
  * with it:

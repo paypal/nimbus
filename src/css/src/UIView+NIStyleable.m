@@ -69,92 +69,39 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
 - (void)applyViewStyleWithRuleSet:(NICSSRuleset *)ruleSet {
   [self applyViewStyleWithRuleSet:ruleSet inDOM:nil];
 }
-
--(NSString *)descriptionWithRuleSetForView:(NICSSRuleset *)ruleSet forPseudoClass:(NSString *)pseudo inDOM:(NIDOM *)dom withViewName:(NSString *)name
-{
-  return [self applyOrDescribe:NO ruleSet:ruleSet inDOM:dom withViewName:name];
-}
-
--(NSString *)descriptionWithRuleSet:(NICSSRuleset *)ruleSet forPseudoClass:(NSString *)pseudo inDOM:(NIDOM *)dom withViewName:(NSString *)name
-{
-  return [self descriptionWithRuleSetForView:ruleSet forPseudoClass:pseudo inDOM:dom withViewName:name];
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)applyViewStyleWithRuleSet:(NICSSRuleset *)ruleSet inDOM:(NIDOM *)dom {
-  [self applyOrDescribe:YES ruleSet:ruleSet inDOM:dom withViewName:nil];
+  [self applyRuleSet:ruleSet inDOM:dom withViewName:nil];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NSString*)applyOrDescribe: (BOOL) apply ruleSet: (NICSSRuleset*) ruleSet inDOM: (NIDOM*)dom withViewName: (NSString*) name {
-  NSMutableString *desc = apply ? nil : [[NSMutableString alloc] init];
-  //      [desc appendFormat:@"%@. = %f;\n"];
+- (void)applyRuleSet: (NICSSRuleset*) ruleSet inDOM: (NIDOM*)dom withViewName: (NSString*) name {
   if ([ruleSet hasBackgroundColor]) {
-    if (apply) {
-      self.backgroundColor = ruleSet.backgroundColor;
-    } else {
-      CGFloat r,g,b,a;
-      [ruleSet.backgroundColor getRed:&r green:&g blue:&b alpha:&a];
-      [desc appendFormat:@"%@.backgroundColor = [UIColor colorWithRed: %f green: %f blue: %f alpha: %f];\n", name, r, g, b, a];
-    }
+    self.backgroundColor = ruleSet.backgroundColor;
   }
   if ([ruleSet hasAccessibilityTraits]) {
-    if (apply) {
-      self.accessibilityTraits = ruleSet.accessibilityTraits;
-    } else {
-      [desc appendFormat:@"%@.accessibilityTraits = (UIAccessibilityTraits) %@;", name, [NSNumber numberWithLongLong: ruleSet.accessibilityTraits]];
-    }
+    self.accessibilityTraits = ruleSet.accessibilityTraits;
   }
   if ([ruleSet hasClipsToBounds]) {
-    if (apply) {
-      self.clipsToBounds = ruleSet.clipsToBounds;
-    } else {
-      [desc appendFormat:@"%@.clipsToBounds = %@;", name, ruleSet.clipsToBounds ? @"YES":@"NO"];
-    }
+    self.clipsToBounds = ruleSet.clipsToBounds;
   }
   if ([ruleSet hasOpacity]) {
-    if (apply) {
-      self.alpha = ruleSet.opacity;
-    } else {
-      [desc appendFormat:@"%@.alpha = %f;", name, ruleSet.opacity];
-    }
+    self.alpha = ruleSet.opacity;
   }
   if ([ruleSet hasBorderRadius]) {
-    if (apply) {
-      self.layer.cornerRadius = ruleSet.borderRadius;
-    } else {
-      [desc appendFormat:@"%@.layer.cornerRadius = %f;\n", name, ruleSet.borderRadius];
-    }
+    self.layer.cornerRadius = ruleSet.borderRadius;
   }
   if ([ruleSet hasBorderWidth]) {
-    if (apply) {
-      self.layer.borderWidth = ruleSet.borderWidth;
-    } else {
-      [desc appendFormat:@"%@.layer.borderWidth = %f;\n", name, ruleSet.borderWidth];
-    }
+    self.layer.borderWidth = ruleSet.borderWidth;
   }
   if ([ruleSet hasBorderColor]) {
-    if (apply) {
-      self.layer.borderColor = ruleSet.borderColor.CGColor;
-    } else {
-      CGFloat r,g,b,a;
-      [ruleSet.borderColor getRed:&r green:&g blue:&b alpha:&a];
-      [desc appendFormat:@"%@.layer.borderColor = [UIColor colorWithRed: %f green: %f blue: %f alpha: %f].CGColor;\n", name, r, g, b, a];
-    }
+    self.layer.borderColor = ruleSet.borderColor.CGColor;
   }
   if ([ruleSet hasAutoresizing]) {
-    if (apply) {
-      self.autoresizingMask = ruleSet.autoresizing;
-    } else {
-      [desc appendFormat:@"%@.autoresizingMask = (UIViewAutoresizing) %d;\n", name, ruleSet.autoresizing];
-    }
+    self.autoresizingMask = ruleSet.autoresizing;
   }
   if ([ruleSet hasVisible]) {
-    if (apply) {
-      self.hidden = !ruleSet.visible;
-    } else {
-      [desc appendFormat:@"%@.hidden = %@;\n", name, ruleSet.visible ? @"NO" : @"YES"];
-    }
+    self.hidden = !ruleSet.visible;
   }
   
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,18 +110,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   // Special case auto/auto height and width
   if ([ruleSet hasWidth] && [ruleSet hasHeight] &&
       ruleSet.width.type == CSS_AUTO_UNIT && ruleSet.height.type == CSS_AUTO_UNIT) {
-    if (apply) {
-      if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-        [((id<NIStyleable>)self) autoSize: ruleSet inDOM: dom];
-      } else {
-        [self sizeToFit];
-      }
+    if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
+      [((id<NIStyleable>)self) autoSize: ruleSet inDOM: dom];
     } else {
-      // We can't actually describe the autoSize bit because the point is to work w/o a ruleset/dom, so just say it...
-      if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-        [desc appendString:@"// autoSize would have been called instead of sizeToFit\n"];
-      }
-      [desc appendFormat:@"[%@ sizeToFit];\n", name];
+      [self sizeToFit];
     }
     if (ruleSet.hasVerticalPadding) {
       NICSSUnit vPadding = ruleSet.verticalPadding;
@@ -182,18 +121,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
         case CSS_AUTO_UNIT:
           break;
         case CSS_PERCENTAGE_UNIT:
-          if (apply) {
-            self.frameHeight += roundf(self.frameHeight * vPadding.value);
-          } else {
-            [desc appendFormat:@"%@.frameHeight += roundf(%@.frameHeight * %f);", name, name, vPadding.value];
-          }
+          self.frameHeight += roundf(self.frameHeight * vPadding.value);
           break;
         case CSS_PIXEL_UNIT:
-          if (apply) {
-            self.frameHeight += vPadding.value;
-          } else {
-            [desc appendFormat:@"%@.frameHeight += %f;", name, vPadding.value];
-          }
+          self.frameHeight += vPadding.value;
           break;
       }
     }
@@ -203,49 +134,29 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
         case CSS_AUTO_UNIT:
           break;
         case CSS_PERCENTAGE_UNIT:
-          if (apply) {
-            self.frameWidth += roundf(self.frameWidth * hPadding.value);
-          } else {
-            [desc appendFormat:@"%@.frameWidth += roundf(%@.frameWidth * %f);", name, name, hPadding.value];
-          }
+          self.frameWidth += roundf(self.frameWidth * hPadding.value);
           break;
         case CSS_PIXEL_UNIT:
-          if (apply) {
-            self.frameWidth += hPadding.value;
-          } else {
-            [desc appendFormat:@"%@.frameWidth += %f;", name, hPadding.value];
-          }
+          self.frameWidth += hPadding.value;
           break;
       }
     }
-
+    
   } else {
     if ([ruleSet hasWidth]) {
       NICSSUnit u = ruleSet.width;
       CGFloat startHeight = self.frameHeight;
       switch (u.type) {
         case CSS_AUTO_UNIT:
-          if (apply) {
-            if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-              [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
-            } else {
-              [self sizeToFit]; // sizeToFit the width, but retain height. Behavior somewhat undefined...
-              self.frameHeight = startHeight;
-            }
+          if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
+            [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
           } else {
-            // We can't actually describe the autoSize bit because the point is to work w/o a ruleset/dom, so just say it...
-            if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-              [desc appendString:@"// autoSize would have been called instead of sizeToFit\n"];
-            }
-            [desc appendFormat:@"[%@ sizeToFit];\n%@.frameHeight = %f;\n", name, name, startHeight];
+            [self sizeToFit]; // sizeToFit the width, but retain height. Behavior somewhat undefined...
+            self.frameHeight = startHeight;
           }
           break;
         case CSS_PERCENTAGE_UNIT:
-          if (apply) {
-            self.frameWidth = roundf(self.superview.bounds.size.width * u.value);
-          } else {
-            [desc appendFormat:@"%@.frameWidth = %f;\n", name, roundf(self.superview.bounds.size.width * u.value)];
-          }
+          self.frameWidth = roundf(self.superview.bounds.size.width * u.value);
           break;
         case CSS_PIXEL_UNIT:
           // Because padding and margin are (a) complicated to implement and (b) not relevant in a non-flow layout,
@@ -253,17 +164,9 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           // it's very useful. If someone wants to layer on padding primitives to deal with this in a more CSSy way,
           // go for it.
           if (u.value < 0) {
-            if (apply) {
-              self.frameWidth = self.superview.frameWidth + u.value;
-            } else {
-              [desc appendFormat:@"%@.frameWidth = %f;\n", name, self.superview.frameWidth + u.value];
-            }
+            self.frameWidth = self.superview.frameWidth + u.value;
           } else {
-            if (apply) {
-              self.frameWidth = u.value;
-            } else {
-              [desc appendFormat:@"%@.frameWidth = %f;\n", name, u.value];
-            }
+            self.frameWidth = u.value;
           }
           break;
       }
@@ -273,18 +176,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           case CSS_AUTO_UNIT:
             break;
           case CSS_PERCENTAGE_UNIT:
-            if (apply) {
-              self.frameWidth += roundf(self.frameWidth * hPadding.value);
-            } else {
-              [desc appendFormat:@"%@.frameWidth += roundf(%@.frameWidth * %f);", name, name, hPadding.value];
-            }
+            self.frameWidth += roundf(self.frameWidth * hPadding.value);
             break;
           case CSS_PIXEL_UNIT:
-            if (apply) {
-              self.frameWidth += hPadding.value;
-            } else {
-              [desc appendFormat:@"%@.frameWidth += %f;", name, hPadding.value];
-            }
+            self.frameWidth += hPadding.value;
             break;
         }
       }
@@ -294,27 +189,15 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       CGFloat startWidth = self.frameWidth;
       switch (u.type) {
         case CSS_AUTO_UNIT:
-          if (apply) {
-            if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-              [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
-            } else {
-              [self sizeToFit];
-              self.frameWidth = startWidth;
-            }
+          if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
+            [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
           } else {
-            // We can't actually describe the autoSize bit because the point is to work w/o a ruleset/dom, so just say it...
-            if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-              [desc appendString:@"// autoSize would have been called instead of sizeToFit\n"];
-            }
-            [desc appendFormat:@"[%@ sizeToFit];\n%@.frameWidth = %f;\n", name, name, startWidth];
+            [self sizeToFit];
+            self.frameWidth = startWidth;
           }
           break;
         case CSS_PERCENTAGE_UNIT:
-          if (apply) {
-            self.frameHeight = roundf(self.superview.bounds.size.height * u.value);
-          } else {
-            [desc appendFormat:@"%@.frameHeight = %f;\n", name, roundf(self.superview.bounds.size.height * u.value)];
-          }
+          self.frameHeight = roundf(self.superview.bounds.size.height * u.value);
           break;
         case CSS_PIXEL_UNIT:
           // Because padding and margin are (a) complicated to implement and (b) not relevant in a non-flow layout,
@@ -322,17 +205,9 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           // it's very useful. If someone wants to layer on padding primitives to deal with this in a more CSSy way,
           // go for it.
           if (u.value < 0) {
-            if (apply) {
-              self.frameHeight = self.superview.frameHeight + u.value;
-            } else {
-              [desc appendFormat:@"%@.frameHeight = %f;\n", name, self.superview.frameHeight + u.value];
-            }
+            self.frameHeight = self.superview.frameHeight + u.value;
           } else {
-            if (apply) {
-              self.frameHeight = u.value;
-            } else {
-              [desc appendFormat:@"%@.frameHeight = %f;\n", name, u.value];
-            }
+            self.frameHeight = u.value;
           }
           break;
       }
@@ -342,18 +217,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           case CSS_AUTO_UNIT:
             break;
           case CSS_PERCENTAGE_UNIT:
-            if (apply) {
-              self.frameHeight += roundf(self.frameHeight * vPadding.value);
-            } else {
-              [desc appendFormat:@"%@.frameHeight += roundf(%@.frameHeight * %f);", name, name, vPadding.value];
-            }
+            self.frameHeight += roundf(self.frameHeight * vPadding.value);
             break;
           case CSS_PIXEL_UNIT:
-            if (apply) {
-              self.frameHeight += vPadding.value;
-            } else {
-              [desc appendFormat:@"%@.frameHeight += %f;", name, vPadding.value];
-            }
+            self.frameHeight += vPadding.value;
             break;
         }
       }
@@ -368,11 +235,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
     switch (u.type) {
       case CSS_PERCENTAGE_UNIT:
       case CSS_PIXEL_UNIT:
-        if (apply) {
-          self.frameMinX = NICSSUnitToPixels(u, self.superview.frameWidth);
-        } else {
-          [desc appendFormat:@"%@.frameMinX = %f;\n", name, NICSSUnitToPixels(u, self.superview.frameWidth)];
-        }
+        self.frameMinX = NICSSUnitToPixels(u, self.superview.frameWidth);
         break;
       default:
         NIDASSERT(u.type == CSS_PERCENTAGE_UNIT || u.type == CSS_PIXEL_UNIT);
@@ -392,11 +255,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMidX = anchor.x;
-          } else {
-            [desc appendFormat:@"%@.frameMidX = %f;\n", name, anchor.x];
-          }
+          self.frameMidX = anchor.x;
           break;
         case CSS_PERCENTAGE_UNIT:
         case CSS_PIXEL_UNIT:
@@ -405,12 +264,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMinX = anchor.x + NICSSUnitToPixels(rightOf.margin, relative.frameWidth);
-          } else {
-            [desc appendFormat:@"%@.frameMinX = %f;\n", name, anchor.x + NICSSUnitToPixels(rightOf.margin, relative.frameWidth)];
-            
-          }
+          self.frameMinX = anchor.x + NICSSUnitToPixels(rightOf.margin, relative.frameWidth);
           break;
       }
     }
@@ -428,57 +282,35 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
         if (ruleSet.hasLeft || ruleSet.hasRightOf) {
           // If this ruleset specifies the left position of this view, then we set the right position
           // while maintaining that left position (by modifying the frame width).
-          if (apply) {
-            self.frameWidth = newMaxX - self.frameMinX;
-            // We just modified the width of the view. The auto-height of the view might depend on its width
-            // (i.e. a multi-line label), so we need to recalculate the height if it was auto.
-            CGFloat startWidth = self.frameWidth;
-            if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-              if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-                [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
-              } else {
-                [self sizeToFit];
-                self.frameWidth = startWidth;
-              }
+          self.frameWidth = newMaxX - self.frameMinX;
+          // We just modified the width of the view. The auto-height of the view might depend on its width
+          // (i.e. a multi-line label), so we need to recalculate the height if it was auto.
+          CGFloat startWidth = self.frameWidth;
+          if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
+            if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
+              [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
+            } else {
+              [self sizeToFit];
+              self.frameWidth = startWidth;
             }
-            // ...and now we've just modified the height, so we need to re-set the vertical padding
-            if (ruleSet.hasVerticalPadding) {
-              NICSSUnit vPadding = ruleSet.verticalPadding;
-              switch (vPadding.type) {
-                case CSS_AUTO_UNIT:
-                  break;
-                case CSS_PERCENTAGE_UNIT:
-                  if (apply) {
-                    self.frameHeight += roundf(self.frameHeight * vPadding.value);
-                  } else {
-                    [desc appendFormat:@"%@.frameHeight += roundf(%@.frameHeight * %f);", name, name, vPadding.value];
-                  }
-                  break;
-                case CSS_PIXEL_UNIT:
-                  if (apply) {
-                    self.frameHeight += vPadding.value;
-                  } else {
-                    [desc appendFormat:@"%@.frameHeight += %f;", name, vPadding.value];
-                  }
-                  break;
-              }
-            }
-          } else {
-            [desc appendFormat:@"%@.frameWidth = %f;\n", name, newMaxX - self.frameMinX];
-            if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-              if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-                [desc appendString:@"// autoSize would have been called instead of sizeToFit\n"];
-              }
-              [desc appendFormat:@"[%@ sizeToFit];\n%@.frameWidth = %f;\n", name, name, newMaxX - self.frameMinX];
+          }
+          // ...and now we've just modified the height, so we need to re-set the vertical padding
+          if (ruleSet.hasVerticalPadding) {
+            NICSSUnit vPadding = ruleSet.verticalPadding;
+            switch (vPadding.type) {
+              case CSS_AUTO_UNIT:
+                break;
+              case CSS_PERCENTAGE_UNIT:
+                self.frameHeight += roundf(self.frameHeight * vPadding.value);
+                break;
+              case CSS_PIXEL_UNIT:
+                self.frameHeight += vPadding.value;
+                break;
             }
           }
         } else {
           // Otherwise, just set the right position normally
-          if (apply) {
-            self.frameMaxX = newMaxX;
-          } else {
-            [desc appendFormat:@"%@.frameMaxX = %f;\n", name, newMaxX];
-          }
+          self.frameMaxX = newMaxX;
         }
         break;
       default:
@@ -499,11 +331,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMidX = anchor.x;
-          } else {
-            [desc appendFormat:@"%@.frameMidX = %f;\n", name, anchor.x];
-          }
+          self.frameMidX = anchor.x;
           break;
         case CSS_PERCENTAGE_UNIT:
         case CSS_PIXEL_UNIT:
@@ -514,57 +342,35 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (ruleSet.hasLeft || ruleSet.hasRightOf) {
             // If this ruleset specifies the left position of this view, then we set the right position
             // while maintaining that left position (by modifying the frame width).
-            if (apply) {
-              self.frameWidth = anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth) - self.frameMinX;
-              // We just modified the width of the view. The auto-height of the view might depend on its width
-              // (i.e. a multi-line label), so we need to recalculate the height if it was auto.
-              CGFloat startWidth = self.frameWidth;
-              if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-                if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-                  [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
-                } else {
-                  [self sizeToFit];
-                  self.frameWidth = startWidth;
-                }
+            self.frameWidth = anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth) - self.frameMinX;
+            // We just modified the width of the view. The auto-height of the view might depend on its width
+            // (i.e. a multi-line label), so we need to recalculate the height if it was auto.
+            CGFloat startWidth = self.frameWidth;
+            if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
+              if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
+                [((id<NIStyleable>)self) autoSize:ruleSet inDOM:dom];
+              } else {
+                [self sizeToFit];
+                self.frameWidth = startWidth;
               }
-              // ...and now we've just modified the height, so we need to re-set the vertical padding
-              if (ruleSet.hasVerticalPadding) {
-                NICSSUnit vPadding = ruleSet.verticalPadding;
-                switch (vPadding.type) {
-                  case CSS_AUTO_UNIT:
-                    break;
-                  case CSS_PERCENTAGE_UNIT:
-                    if (apply) {
-                      self.frameHeight += roundf(self.frameHeight * vPadding.value);
-                    } else {
-                      [desc appendFormat:@"%@.frameHeight += roundf(%@.frameHeight * %f);", name, name, vPadding.value];
-                    }
-                    break;
-                  case CSS_PIXEL_UNIT:
-                    if (apply) {
-                      self.frameHeight += vPadding.value;
-                    } else {
-                      [desc appendFormat:@"%@.frameHeight += %f;", name, vPadding.value];
-                    }
-                    break;
-                }
-              }
-            } else {
-              [desc appendFormat:@"%@.frameWidth = %f;\n", name, anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth) - self.frameMinX];
-              if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-                if ([self respondsToSelector:@selector(autoSize:inDOM:)]) {
-                  [desc appendString:@"// autoSize would have been called instead of sizeToFit\n"];
-                }
-                [desc appendFormat:@"[%@ sizeToFit];\n%@.frameWidth = %f;\n", name, name, anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth) - self.frameMinX];
+            }
+            // ...and now we've just modified the height, so we need to re-set the vertical padding
+            if (ruleSet.hasVerticalPadding) {
+              NICSSUnit vPadding = ruleSet.verticalPadding;
+              switch (vPadding.type) {
+                case CSS_AUTO_UNIT:
+                  break;
+                case CSS_PERCENTAGE_UNIT:
+                  self.frameHeight += roundf(self.frameHeight * vPadding.value);
+                  break;
+                case CSS_PIXEL_UNIT:
+                  self.frameHeight += vPadding.value;
+                  break;
               }
             }
           } else {
             // Otherwise, just set the right position normally
-            if (apply) {
-              self.frameMaxX = anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth);
-            } else {
-              [desc appendFormat:@"%@.frameMaxX = %f;\n", name, anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth)];
-            }
+            self.frameMaxX = anchor.x - NICSSUnitToPixels(leftOf.margin, relative.frameWidth);
           }
           break;
       }
@@ -577,18 +383,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   if ([ruleSet hasFrameHorizontalAlign]) {
     switch (ruleSet.frameHorizontalAlign) {
       case UITextAlignmentCenter:
-        if (apply) {
-          self.frameMidX = roundf(self.superview.bounds.size.width / 2.0);
-        } else {
-          [desc appendFormat:@"%@.frameMidX = %f;\n", name, roundf(self.superview.bounds.size.width / 2.0)];
-        }
+        self.frameMidX = roundf(self.superview.bounds.size.width / 2.0);
         break;
       case UITextAlignmentLeft:
-        if (apply) {
-          self.frameMinX = 0;
-        } else {
-          [desc appendFormat:@"%@.frameMinX = 0;\n", name];
-        }
+        self.frameMinX = 0;
         break;
       case UITextAlignmentRight:
         self.frameMaxX = self.superview.bounds.size.width;
@@ -607,11 +405,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
     switch (u.type) {
       case CSS_PERCENTAGE_UNIT:
       case CSS_PIXEL_UNIT:
-        if (apply) {
-          self.frameMinY = NICSSUnitToPixels(u, self.superview.frameHeight);
-        } else {
-          [desc appendFormat:@"%@.frameMinY = %f;\n", name, NICSSUnitToPixels(u, self.superview.frameHeight)];
-        }
+        self.frameMinY = NICSSUnitToPixels(u, self.superview.frameHeight);
         break;
       default:
         NIDASSERT(u.type == CSS_PERCENTAGE_UNIT || u.type == CSS_PIXEL_UNIT);
@@ -631,11 +425,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMidY = anchor.y;
-          } else {
-            [desc appendFormat:@"%@.frameMidY = %f;\n", name, anchor.y];
-          }
+          self.frameMidY = anchor.y;
           break;
         case CSS_PERCENTAGE_UNIT:
         case CSS_PIXEL_UNIT:
@@ -643,12 +433,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMinY = anchor.y + NICSSUnitToPixels(below.margin, relative.frameHeight);
-          } else {
-            [desc appendFormat:@"%@.frameMinY = %f;\n", name, anchor.y + NICSSUnitToPixels(below.margin, relative.frameWidth)];
-            
-          }
+          self.frameMinY = anchor.y + NICSSUnitToPixels(below.margin, relative.frameHeight);
           break;
       }
     }
@@ -666,18 +451,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
         if (ruleSet.hasTop || ruleSet.hasBelow) {
           // If this ruleset specifies the top position of this view, then we set the bottom position
           // while maintaining that top position (by modifying the frame height).
-          if (apply) {
-            self.frameHeight = newBottom - self.frameMinY;
-          } else {
-            [desc appendFormat:@"%@.frameHeight = %f;\n", name, newBottom - self.frameMinY];
-          }
+          self.frameHeight = newBottom - self.frameMinY;
         } else {
           // Otherwise, just set the bottom normally
-          if (apply) {
-            self.frameMaxY = newBottom;
-          } else {
-            [desc appendFormat:@"%@.frameMaxY = %f;\n", name, newBottom];
-          }
+          self.frameMaxY = newBottom;
         }
         break;
       default:
@@ -698,11 +475,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          if (apply) {
-            self.frameMidX = anchor.x;
-          } else {
-            [desc appendFormat:@"%@.frameMidX = %f;\n", name, anchor.x];
-          }
+          self.frameMidX = anchor.x;
           break;
         case CSS_PERCENTAGE_UNIT:
         case CSS_PIXEL_UNIT:
@@ -713,18 +486,10 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
           if (ruleSet.hasTop || ruleSet.hasBelow) {
             // If this ruleset specifies the top position of this view, then we set the bottom position
             // while maintaining that top position (by modifying the frame height).
-            if (apply) {
-              self.frameHeight = anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight) - self.frameMinY;
-            } else {
-              [desc appendFormat:@"%@.frameHeight = %f;\n", name, anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight) - self.frameMinY];
-            }
+            self.frameHeight = anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight) - self.frameMinY;
           } else {
             // Otherwise, just set the bottom position normally
-            if (apply) {
-              self.frameMaxY = anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight);
-            } else {
-              [desc appendFormat:@"%@.frameMaxY = %f;\n", name, anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight)];
-            }
+            self.frameMaxY = anchor.y - NICSSUnitToPixels(above.margin, relative.frameHeight);
           }
           break;
       }
@@ -737,25 +502,13 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   if ([ruleSet hasFrameVerticalAlign]) {
     switch (ruleSet.frameVerticalAlign) {
       case UIViewContentModeCenter:
-        if (apply) {
-          self.frameMidY = roundf(self.superview.bounds.size.height / 2.0);
-        } else {
-          [desc appendFormat:@"%@.frameMidY = %f;\n", name, roundf(self.superview.bounds.size.height / 2.0)];
-        }
+        self.frameMidY = roundf(self.superview.bounds.size.height / 2.0);
         break;
       case UIViewContentModeTop:
-        if (apply) {
-          self.frameMinY = 0;
-        } else {
-          [desc appendFormat:@"%@.frameMinY = 0;\n", name];
-        }
+        self.frameMinY = 0;
         break;
       case UIViewContentModeBottom:
-        if (apply) {
-          self.frameMaxY = self.superview.bounds.size.height;
-        } else {
-          [desc appendFormat:@"%@.frameMaxY = %f;\n", name, self.superview.bounds.size.height];
-        }
+        self.frameMaxY = self.superview.bounds.size.height;
         break;
       default:
         NIDASSERT(NO);
@@ -769,72 +522,54 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   if ([ruleSet hasMaxWidth]) {
     CGFloat max = NICSSUnitToPixels(ruleSet.maxWidth,self.frameWidth);
     if (self.frameWidth > max) {
-      if (apply) {
-        self.frameWidth = max;
-      } else {
-        [desc appendFormat:@"%@.frameWidth = %f;\n", name, max];
-      }
+      self.frameWidth = max;
     }
   }
   if ([ruleSet hasMaxHeight]) {
     CGFloat max = NICSSUnitToPixels(ruleSet.maxHeight,self.frameHeight);
     if (self.frameHeight > max) {
-      if (apply) {
-        self.frameHeight = max;
-      } else {
-        [desc appendFormat:@"%@.frameHeight = %f;\n", name, max];
-      }
+      self.frameHeight = max;
     }
   }
   if ([ruleSet hasMinWidth]) {
     CGFloat min = NICSSUnitToPixels(ruleSet.minWidth,self.frameWidth);
     if (self.frameWidth < min) {
-      if (apply) {
-        self.frameWidth = min;
-      } else {
-        [desc appendFormat:@"%@.frameWidth = %f;\n", name, min];
-      }
+      self.frameWidth = min;
     }
   }
   if ([ruleSet hasMinHeight]) {
     CGFloat min = NICSSUnitToPixels(ruleSet.minHeight,self.frameHeight);
     if (self.frameHeight < min) {
-      if (apply) {
-        self.frameHeight = min;
-      } else {
-        [desc appendFormat:@"%@.frameHeight = %f;\n", name, min];
-      }
+      self.frameHeight = min;
     }
   }
- 
-  return desc;
 }
 
 - (UIView *)relativeViewFromViewSpec:(NSString *)viewSpec inDom:(NIDOM *)dom
 {
-    UIView* relative = nil;
-    if ([viewSpec characterAtIndex:0] == '\\') {
-        if ([viewSpec caseInsensitiveCompare:@"\\next"] == NSOrderedSame) {
-            NSInteger ix = [self.superview.subviews indexOfObject:self];
-            if (++ix < self.superview.subviews.count) {
-                relative = [self.superview.subviews objectAtIndex:ix];
-            }
-        } else if ([viewSpec caseInsensitiveCompare:@"\\prev"] == NSOrderedSame) {
-            NSInteger ix = [self.superview.subviews indexOfObject:self];
-            if (ix > 0) {
-                relative = [self.superview.subviews objectAtIndex:ix-1];
-            }
-        } else if ([viewSpec caseInsensitiveCompare:@"\\first"] == NSOrderedSame) {
-            relative = [self.superview.subviews objectAtIndex:0];
-            if (relative == self) { relative = nil; }
-        } else if ([viewSpec caseInsensitiveCompare:@"\\last"] == NSOrderedSame) {
-            relative = [self.superview.subviews lastObject];
-            if (relative == self) { relative = nil; }
-        }
-    } else {
-        relative = [dom viewById:viewSpec];
+  UIView* relative = nil;
+  if ([viewSpec characterAtIndex:0] == '\\') {
+    if ([viewSpec caseInsensitiveCompare:@"\\next"] == NSOrderedSame) {
+      NSInteger ix = [self.superview.subviews indexOfObject:self];
+      if (++ix < self.superview.subviews.count) {
+        relative = [self.superview.subviews objectAtIndex:ix];
+      }
+    } else if ([viewSpec caseInsensitiveCompare:@"\\prev"] == NSOrderedSame) {
+      NSInteger ix = [self.superview.subviews indexOfObject:self];
+      if (ix > 0) {
+        relative = [self.superview.subviews objectAtIndex:ix-1];
+      }
+    } else if ([viewSpec caseInsensitiveCompare:@"\\first"] == NSOrderedSame) {
+      relative = [self.superview.subviews objectAtIndex:0];
+      if (relative == self) { relative = nil; }
+    } else if ([viewSpec caseInsensitiveCompare:@"\\last"] == NSOrderedSame) {
+      relative = [self.superview.subviews lastObject];
+      if (relative == self) { relative = nil; }
     }
-    return relative;
+  } else {
+    relative = [dom viewById:viewSpec];
+  }
+  return relative;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
