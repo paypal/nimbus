@@ -26,10 +26,9 @@
 #endif
 
 @interface NIDOM ()
-@property (nonatomic,strong) NIStylesheet* stylesheet;
+@property (nonatomic,strong) NSArray* stylesheets;
 @property (nonatomic,strong) NSMutableArray* registeredViews;
 @property (nonatomic,strong) NSMutableDictionary* idToViewMap;
-@property (nonatomic,strong) NIDOM *parent;
 @property (nonatomic,strong) NSMutableSet *refreshedViews;
 @end
 
@@ -41,47 +40,17 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 + (id)domWithStylesheet:(NIStylesheet *)stylesheet {
-  return [[self alloc] initWithStylesheet:stylesheet];
+  return [[self alloc] initWithStylesheets:@[stylesheet]];
 }
 
++ (id)domWithStylesheets:(NSArray *)stylesheets {
+  return [[self alloc] initWithStylesheets:stylesheets];
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-+ (id)domWithStylesheetWithPathPrefix:(NSString *)pathPrefix paths:(NSString *)path, ... {
-  va_list ap;
-  va_start(ap, path);
-  
-  NIStylesheet* compositeStylesheet = [[NIStylesheet alloc] init];
-  
-  while (nil != path) {
-    NIDASSERT([path isKindOfClass:[NSString class]]);
-    
-    if ([path isKindOfClass:[NSString class]]) {
-      NIStylesheet* stylesheet = [[NIStylesheet alloc] init];
-      if ([stylesheet loadFromPath:path pathPrefix:pathPrefix]) {
-        [compositeStylesheet addStylesheet:stylesheet];
-      }
-    }
-    path = va_arg(ap, NSString*);
-  }
-  va_end(ap);
-  
-  return [[self alloc] initWithStylesheet:compositeStylesheet];
-}
-
-+(id)domWithStylesheet:(NIStylesheet *)stylesheet andParentStyles:(NIStylesheet *)parentStyles
-{
-  NIDOM *dom = [[self alloc] initWithStylesheet:stylesheet];
-  if (parentStyles) {
-    dom.parent = [NIDOM domWithStylesheet:parentStyles andParentStyles:nil];
-  }
-  return dom;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (id)initWithStylesheet:(NIStylesheet *)stylesheet {
+- (id)initWithStylesheets:(NSArray *)stylesheets {
   if ((self = [super init])) {
-    _stylesheet = stylesheet;
+    _stylesheets = [stylesheets copy];
     _registeredViews = [NSMutableArray array];
   }
   return self;
@@ -102,10 +71,9 @@
   NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   NSArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
 
-  if (self.parent) {
-    [self.parent.stylesheet applyStyleToView:view withSelectors:selectors andPseudoSelectors:pseudoSelectors inDOM:self];
+  for (NIStylesheet *stylesheet in self.stylesheets) {
+    [stylesheet applyStyleToView:view withSelectors:selectors andPseudoSelectors:pseudoSelectors inDOM:self];
   }
-  [_stylesheet applyStyleToView:view withSelectors:selectors andPseudoSelectors:pseudoSelectors inDOM:self];
 }
 
 
@@ -157,9 +125,6 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 - (void)registerView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
 
-  if (self.parent) {
-    [self.parent registerView:view];
-  }
   NSString* selector = NSStringFromClass([view class]);
   [self registerSelector:selector withView:view];
   
@@ -189,18 +154,13 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
   NSArray *pseudos = nil;
   if (viewId) {
     if (![viewId hasPrefix:@"#"]) { viewId = [@"#" stringByAppendingString:viewId]; }
-    if (self.parent) {
-      [self.parent registerSelector:viewId withView:view];
-    }
+
     [self registerSelector:viewId withView:view];
     
     if ([view respondsToSelector:@selector(pseudoClasses)]) {
       pseudos = (NSArray*) [view performSelector:@selector(pseudoClasses)];
       if (pseudos) {
         for (NSString *ps in pseudos) {
-          if (self.parent) {
-            [self.parent registerSelector:[viewId stringByAppendingString:ps] withView:view];
-          }
           [self registerSelector:[viewId stringByAppendingString:ps] withView:view];
         }
       }
@@ -218,9 +178,6 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 - (void)registerView:(UIView *)view withCSSClass:(NSString *)cssClass registerMainView: (BOOL) registerMainView
 {
   if (registerMainView) {
-    if (self.parent) {
-      [self.parent registerView:view withCSSClass:cssClass registerMainView:NO];
-    }
     [self registerView:view];
   }
   

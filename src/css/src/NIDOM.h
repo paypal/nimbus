@@ -69,12 +69,11 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
 
 // Designated initializer.
 
-- (id)initWithStylesheet:(NIStylesheet *)stylesheet;
+- (id)initWithStylesheets:(NSArray *)stylesheets;
+
 
 + (id)domWithStylesheet:(NIStylesheet *)stylesheet;
-+ (id)domWithStylesheetWithPathPrefix:(NSString *)pathPrefix paths:(NSString *)path, ...;
-
-+ (id)domWithStylesheet:(NIStylesheet *)stylesheet andParentStyles: (NIStylesheet*) parentStyles;
++ (id)domWithStylesheets:(NSArray *)stylesheets;
 
 - (void)registerView:(UIView *)view;
 - (void)registerView:(UIView *)view withCSSClass:(NSString *)cssClass;
@@ -111,21 +110,6 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
  * Returns an autoreleased DOM initialized with the given stylesheet.
  *
  *      @fn NIDOM::domWithStylesheet:
- */
-
-/**
- * Returns an autoreleased DOM initialized with a nil-terminated list of file paths.
- *
- *      @fn NIDOM::domWithStylesheetWithPathPrefix:paths:
- */
-
-/**
- * Returns an autoreleased DOM initialized with the given stylesheet and a "parent" stylesheet
- * that runs first. Doing this rather than compositing stylesheets can save memory and improve
- * performance in the common case where you have a set of global styles and a bunch of view
- * or view controller specific style sheets.
- *
- *      @fn NIDOM::domWithStylesheet:andParentStyles:
  */
 
 /** @name Registering Views */
