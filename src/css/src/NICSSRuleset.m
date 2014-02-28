@@ -153,11 +153,13 @@ return _##name; \
   NSMutableArray* order = [_ruleset objectForKey:kPropertyOrderKey];
   [_ruleset addEntriesFromDictionary:dictionary];
 
-  if (nil != order) {
-    [order removeObjectsInArray:[dictionary objectForKey:kPropertyOrderKey]];
-    [order addObjectsFromArray:[dictionary objectForKey:kPropertyOrderKey]];
-    [_ruleset setObject:order forKey:kPropertyOrderKey];
+  if (!order) {
+    order = [NSMutableArray array];
   }
+
+  [order removeObjectsInArray:[dictionary objectForKey:kPropertyOrderKey]];
+  [order addObjectsFromArray:[dictionary objectForKey:kPropertyOrderKey]];
+  [_ruleset setObject:order forKey:kPropertyOrderKey];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
