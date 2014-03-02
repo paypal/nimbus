@@ -68,6 +68,8 @@ extern NSString* const NIStylesheetDidChangeNotification;
 
 - (NICSSRuleset *)rulesetForClassName:(NSString *)className;
 
+- (void)resetPreallocatedRulesetIndex;
+
 +(Class)rulesetClass;
 +(void)setRulesetClass: (Class) rulesetClass;
 

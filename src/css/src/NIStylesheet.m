@@ -43,7 +43,13 @@ NSString* const NIStylesheetDidChangeNotification = @"NIStylesheetDidChangeNotif
 static Class _rulesetClass;
 static id<NICSSResourceResolverDelegate> _resolver;
 
-@interface NIStylesheet()
+
+static const int numPreallocatedRulesets = 100;
+
+@interface NIStylesheet() {
+  NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
+}
+@property (nonatomic, assign) int preallocatedRulesetIndex;
 @property (nonatomic, readonly, copy) NSDictionary* rawRulesets;
 @property (nonatomic, readonly, copy) NSDictionary* significantScopeToScopes;
 @end
@@ -56,11 +62,43 @@ static id<NICSSResourceResolverDelegate> _resolver;
 @synthesize rawRulesets = _rawRulesets;
 @synthesize significantScopeToScopes = _significantScopeToScopes;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Rule Sets
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)init {
+  if ((self = [super init])) {
+    [self setupPreallocatedRulesets];
+  }
+  return self;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(void)setupPreallocatedRulesets {
+  for (int i = 0; i < numPreallocatedRulesets; i++) {
+    _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(NICSSRuleset *)getRuleset {
+  NICSSRuleset *r;
+  if (self.preallocatedRulesetIndex < numPreallocatedRulesets) {
+    r = _preallocatedRulesets[self.preallocatedRulesetIndex];
+  } else {
+    r = [[[NIStylesheet rulesetClass] alloc] init];
+  }
+  
+  [r reset];
+  self.preallocatedRulesetIndex++;
+  return r;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(void)resetPreallocatedRulesetIndex {
+  self.preallocatedRulesetIndex = 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Builds a map of significant scopes to full scopes.
@@ -253,11 +291,10 @@ static id<NICSSResourceResolverDelegate> _resolver;
 {
   if ([selectors count] > 0) {
     // Gather all of the rule sets for this view into a composite rule set.
-    NICSSRuleset *ruleSet = [[[NIStylesheet rulesetClass] alloc] init];
+    NICSSRuleset *ruleSet = [self getRuleset];
     
     // Composite the rule sets into one.
     for (NSString* selector in selectors) {
-      // TODO the array coming in is now style definitions, we need to figure out if the view being asked matches...
       [ruleSet addEntriesFromDictionary:[_rawRulesets objectForKey:selector]];
     }
     

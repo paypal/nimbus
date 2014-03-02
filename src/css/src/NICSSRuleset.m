@@ -149,6 +149,11 @@ return _##name; \
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)reset {
+  [self reduceMemory];
+  [_ruleset removeAllObjects];
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)addEntriesFromDictionary:(NSDictionary *)dictionary {
   NSMutableArray* oldOrder = [_ruleset objectForKey:kPropertyOrderKey] ?: [NSMutableArray array];
   NSMutableArray* newOrder = [dictionary objectForKey:kPropertyOrderKey];

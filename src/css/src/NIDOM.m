@@ -19,6 +19,7 @@
 #import "NIStylesheet.h"
 #import "NIStyleable.h"
 #import "NimbusCore.h"
+#import "NICSSRuleset.h"
 #import <objc/runtime.h>
 
 #if !defined(__has_feature) || !__has_feature(objc_arc)
@@ -292,6 +293,7 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
     [self refreshStyleForView:view];
   }
   self.refreshedViews = nil;
+  [self.stylesheets makeObjectsPerformSelector:@selector(resetPreallocatedRulesetIndex)];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,6 +303,7 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
   [self.refreshedViews addObject:view];
   [self refreshStyleForView:view];
   self.refreshedViews = nil;
+  [self.stylesheets makeObjectsPerformSelector:@selector(resetPreallocatedRulesetIndex)];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
