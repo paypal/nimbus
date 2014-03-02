@@ -26,7 +26,11 @@
 #error "Nimbus requires ARC support."
 #endif
 
-@interface NIDOM ()
+static const int numPreallocatedRulesets = 200;
+@interface NIDOM () {
+  NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
+}
+@property (nonatomic, assign) int preallocatedRulesetIndex;
 @property (nonatomic,strong) NSArray* stylesheets;
 @property (nonatomic,strong) NSMutableArray* registeredViews;
 @property (nonatomic,strong) NSMutableDictionary* idToViewMap;
@@ -53,6 +57,7 @@
   if ((self = [super init])) {
     _stylesheets = [stylesheets copy];
     _registeredViews = [NSMutableArray array];
+    [self setupPreallocatedRulesets];
   }
   return self;
 }
@@ -67,13 +72,63 @@
 #pragma mark - Styling Views
 
 
+-(void)setupPreallocatedRulesets {
+  for (int i = 0; i < numPreallocatedRulesets; i++) {
+    _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(NICSSRuleset *)getRuleset {
+  NICSSRuleset *r;
+  if (self.preallocatedRulesetIndex < numPreallocatedRulesets) {
+    r = _preallocatedRulesets[self.preallocatedRulesetIndex];
+  } else {
+    r = [[[NIStylesheet rulesetClass] alloc] init];
+  }
+  
+  [r reset];
+  self.preallocatedRulesetIndex++;
+  return r;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(void)resetPreallocatedRulesetIndex {
+  self.preallocatedRulesetIndex = 0;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshStyleForView:(UIView *)view {
   NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   NSArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
 
+
+  NICSSRuleset *ruleset = [self getRuleset];
   for (NIStylesheet *stylesheet in self.stylesheets) {
-    [stylesheet applyStyleToView:view withSelectors:selectors andPseudoSelectors:pseudoSelectors inDOM:self];
+    [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self];
+  }
+  [self applyRuleSet:ruleset toView:view];
+
+
+  for (NSString *pseudoSelector in pseudoSelectors) {
+    if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
+      NSRange r = [pseudoSelector rangeOfString:@":"];
+
+      NICSSRuleset *ruleset = [self getRuleset];
+      for (NIStylesheet *stylesheet in self.stylesheets) {
+        [stylesheet addStylesForView:view withSelectors:@[pseudoSelector] toRuleset:ruleset inDOM:self];
+      }
+      [(id<NIStyleable>)view applyStyleWithRuleSet:ruleset
+                                    forPseudoClass:[pseudoSelector substringFromIndex:r.location+1]
+                                             inDOM:self];
+    }
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)applyRuleSet:(NICSSRuleset *)ruleSet toView:(UIView *)view {
+  if ([view respondsToSelector:@selector(applyStyleWithRuleSet:inDOM:)]) {
+    [(id<NIStyleable>)view applyStyleWithRuleSet:ruleSet inDOM:self];
   }
 }
 
@@ -287,23 +342,23 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refresh {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
+  [self resetPreallocatedRulesetIndex];
   self.refreshedViews = [[NSMutableSet alloc] initWithCapacity:_registeredViews.count+1];
   for (UIView* view in _registeredViews) {
     [self.refreshedViews addObject:view];
     [self refreshStyleForView:view];
   }
   self.refreshedViews = nil;
-  [self.stylesheets makeObjectsPerformSelector:@selector(resetPreallocatedRulesetIndex)];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
+  [self resetPreallocatedRulesetIndex];
   self.refreshedViews = [[NSMutableSet alloc] init];
   [self.refreshedViews addObject:view];
   [self refreshStyleForView:view];
   self.refreshedViews = nil;
-  [self.stylesheets makeObjectsPerformSelector:@selector(resetPreallocatedRulesetIndex)];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

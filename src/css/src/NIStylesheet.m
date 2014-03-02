@@ -44,12 +44,8 @@ static Class _rulesetClass;
 static id<NICSSResourceResolverDelegate> _resolver;
 
 
-static const int numPreallocatedRulesets = 100;
 
-@interface NIStylesheet() {
-  NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
-}
-@property (nonatomic, assign) int preallocatedRulesetIndex;
+@interface NIStylesheet()
 @property (nonatomic, readonly, copy) NSDictionary* rawRulesets;
 @property (nonatomic, readonly, copy) NSDictionary* significantScopeToScopes;
 @end
@@ -66,39 +62,6 @@ static const int numPreallocatedRulesets = 100;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Rule Sets
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (id)init {
-  if ((self = [super init])) {
-    [self setupPreallocatedRulesets];
-  }
-  return self;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(void)setupPreallocatedRulesets {
-  for (int i = 0; i < numPreallocatedRulesets; i++) {
-    _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(NICSSRuleset *)getRuleset {
-  NICSSRuleset *r;
-  if (self.preallocatedRulesetIndex < numPreallocatedRulesets) {
-    r = _preallocatedRulesets[self.preallocatedRulesetIndex];
-  } else {
-    r = [[[NIStylesheet rulesetClass] alloc] init];
-  }
-  
-  [r reset];
-  self.preallocatedRulesetIndex++;
-  return r;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(void)resetPreallocatedRulesetIndex {
-  self.preallocatedRulesetIndex = 0;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Builds a map of significant scopes to full scopes.
@@ -259,106 +222,74 @@ static const int numPreallocatedRulesets = 100;
 #pragma mark Applying Styles to Views
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)applyRuleSet:(NICSSRuleset *)ruleSet toView:(UIView *)view inDOM: (NIDOM*)dom {
-  if ([view respondsToSelector:@selector(applyStyleWithRuleSet:inDOM:)]) {
-    [(id<NIStyleable>)view applyStyleWithRuleSet:ruleSet inDOM:dom];
-  }
-}
-
-
-- (void)applyStyleToView:(UIView *)view withSelectors:(NSArray *)selectors andPseudoSelectors:(NSArray *)pseudoSelectors inDOM:(NIDOM *)dom {
-  NICSSRuleset *ruleset = [self rulesetForView:view withSelectors:selectors inDOM:dom];
-  if (ruleset) {
-    [self applyRuleSet:ruleset toView:view inDOM:dom];
-  }
-
-  for (NSString *pseudoSelector in pseudoSelectors) {
-    if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
-      NSRange r = [pseudoSelector rangeOfString:@":"];
-      NICSSRuleset *pseudoRuleset = [self rulesetForView:view withSelectors:@[pseudoSelector] inDOM:dom];
-      if (pseudoRuleset) {
-        [(id<NIStyleable>)view applyStyleWithRuleSet:pseudoRuleset
-                                      forPseudoClass:[pseudoSelector substringFromIndex:r.location+1]
-                                               inDOM:dom];
-      }
-    }
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NICSSRuleset*) rulesetWithSelectors: (NSArray*) selectors
+- (void) addRulesForSelectors: (NSArray*) selectors toRuleset:(NICSSRuleset*)ruleset
 {
-  if ([selectors count] > 0) {
-    // Gather all of the rule sets for this view into a composite rule set.
-    NICSSRuleset *ruleSet = [self getRuleset];
-    
-    // Composite the rule sets into one.
-    for (NSString* selector in selectors) {
-      [ruleSet addEntriesFromDictionary:[_rawRulesets objectForKey:selector]];
-    }
-    
-    return ruleSet;
+  // Composite the rule sets into one.
+  for (NSString* selector in selectors) {
+    // TODO the array coming in is now style definitions, we need to figure out if the view being asked matches...
+    [ruleset addEntriesFromDictionary:[_rawRulesets objectForKey:selector]];
   }
-  
-  return nil;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (NICSSRuleset *)rulesetForClassName:(NSString *)className {
-  return [self rulesetWithSelectors: @[className]];
+  NICSSRuleset *ruleset = [[[[self class] rulesetClass] alloc] init];
+  [self addRulesForSelectors:@[className] toRuleset:ruleset];
+  return ruleset;
 }
 
 static NSMutableArray * matchingSelectors;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (NICSSRuleset*) rulesetForView: (UIView*) view withSelectors: (NSArray*) shortSelectors inDOM: (NIDOM*) dom {
 
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        matchingSelectors = [NSMutableArray array];
-    });
-    [matchingSelectors removeAllObjects];
+- (void)addStylesForView:(UIView *)view withSelectors:(NSArray *)shortSelectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    matchingSelectors = [NSMutableArray array];
+  });
+  [matchingSelectors removeAllObjects];
 
   for (NSString *selector in shortSelectors) {
 
     NSArray* selectors = [_significantScopeToScopes objectForKey:selector];
 
     for (NICSSScopeDefinition *sd in selectors) {
-        if (sd.orderedList == nil || sd.orderedList.count == 1) {
-            [matchingSelectors addObject:sd.fullScope];
-        } else {
-            // Ok, now we've got to walk the hierarchy looking for a match. lastObject is className, but the others are unknown
-            UIView *matchView = [view superview];
-            int ruleIx = sd.orderedList.count - 2;
-            while (matchView && ruleIx >= 0) {
-                NSString *currentMatch = [sd.orderedList objectAtIndex:ruleIx];
-                BOOL mustMatch = NO;
-                if ([currentMatch isEqualToString:@">"]) {
-                    ruleIx--;
-                    if (ruleIx < 0) {
-                        break; // > at the root. Match I suppose.
-                    }
-                    currentMatch = [sd.orderedList objectAtIndex:ruleIx];
-                    mustMatch = YES;
-                }
-                char first = [currentMatch characterAtIndex:0];
-                BOOL isObjCClass = (first != '#' && first != '.');
-                if ((!isObjCClass && [dom view: matchView hasShortSelector: currentMatch]) ||
-                    (isObjCClass && [NSStringFromClass([matchView class]) isEqualToString:currentMatch])) {
-                    ruleIx--;
-                } else if (mustMatch) {
-                    // Didn't match, bail.
-                    break;
-                }
-                matchView = [matchView superview];
-            }
+      if (sd.orderedList == nil || sd.orderedList.count == 1) {
+        [matchingSelectors addObject:sd.fullScope];
+      } else {
+        // Ok, now we've got to walk the hierarchy looking for a match. lastObject is className, but the others are unknown
+        UIView *matchView = [view superview];
+        int ruleIx = sd.orderedList.count - 2;
+        while (matchView && ruleIx >= 0) {
+          NSString *currentMatch = [sd.orderedList objectAtIndex:ruleIx];
+          BOOL mustMatch = NO;
+          if ([currentMatch isEqualToString:@">"]) {
+            ruleIx--;
             if (ruleIx < 0) {
-                [matchingSelectors addObject:sd.fullScope];
+              break; // > at the root. Match I suppose.
             }
+            currentMatch = [sd.orderedList objectAtIndex:ruleIx];
+            mustMatch = YES;
+          }
+          char first = [currentMatch characterAtIndex:0];
+          BOOL isId = first == '#', isCssClass = first == '.', isObjCClass = !isId && !isCssClass;
+          if ((!isObjCClass && [dom view: matchView hasShortSelector: currentMatch]) ||
+              (isObjCClass && [NSStringFromClass([matchView class]) isEqualToString:currentMatch])) {
+            ruleIx--;
+          } else if (mustMatch) {
+            // Didn't match, bail.
+            break;
+          }
+          matchView = [matchView superview];
         }
+        if (ruleIx < 0) {
+          [matchingSelectors addObject:sd.fullScope];
+        }
+      }
     }
   }
-  return [self rulesetWithSelectors:matchingSelectors];
+  [self addRulesForSelectors:matchingSelectors toRuleset:ruleset];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

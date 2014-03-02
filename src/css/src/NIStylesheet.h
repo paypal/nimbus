@@ -62,13 +62,12 @@ extern NSString* const NIStylesheetDidChangeNotification;
 - (BOOL)loadFromPath:(NSString *)path pathPrefix:(NSString *)path;
 - (BOOL)loadFromPath:(NSString *)path;
 
+
+- (void)addStylesForView:(UIView *)view withSelectors:(NSArray *)selectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom;
+
 - (void)addStylesheet:(NIStylesheet *)stylesheet;
 
-- (void)applyStyleToView:(UIView *)view withSelectors:(NSArray *)selectors andPseudoSelectors:(NSArray *)pseudoSelectors inDOM:(NIDOM *)dom;
-
 - (NICSSRuleset *)rulesetForClassName:(NSString *)className;
-
-- (void)resetPreallocatedRulesetIndex;
 
 +(Class)rulesetClass;
 +(void)setRulesetClass: (Class) rulesetClass;
