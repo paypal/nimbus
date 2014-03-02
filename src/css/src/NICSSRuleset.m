@@ -150,16 +150,14 @@ return _##name; \
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)addEntriesFromDictionary:(NSDictionary *)dictionary {
-  NSMutableArray* order = [_ruleset objectForKey:kPropertyOrderKey];
+  NSMutableArray* oldOrder = [_ruleset objectForKey:kPropertyOrderKey] ?: [NSMutableArray array];
+  NSMutableArray* newOrder = [dictionary objectForKey:kPropertyOrderKey];
+
   [_ruleset addEntriesFromDictionary:dictionary];
 
-  if (!order) {
-    order = [NSMutableArray array];
-  }
+  [oldOrder addObjectsFromArray:newOrder];
 
-  [order removeObjectsInArray:[dictionary objectForKey:kPropertyOrderKey]];
-  [order addObjectsFromArray:[dictionary objectForKey:kPropertyOrderKey]];
-  [_ruleset setObject:order forKey:kPropertyOrderKey];
+  [_ruleset setObject:oldOrder forKey:kPropertyOrderKey];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
