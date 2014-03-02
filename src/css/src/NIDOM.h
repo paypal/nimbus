@@ -82,8 +82,7 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
 - (void)addCssClass:(NSString *)cssClass toView:(UIView*) view;
 - (void)addCssClasses:(NSArray *)cssClasses toView:(UIView *)view;
 - (void)removeCssClass: (NSString*) cssClass fromView: (UIView*) view;
-- (BOOL)view: (UIView*) view hasCssClass: (NSString*) cssClass;
-- (BOOL)view: (UIView*) view hasCssId: (NSString*) cssId;
+- (BOOL)view: (UIView*) view hasShortSelector: (NSString*) shortSelector;
 
 - (void)unregisterView:(UIView *)view;
 - (void)unregisterAllViews;

@@ -305,9 +305,8 @@ static NSMutableArray * matchingSelectors;
                     mustMatch = YES;
                 }
                 char first = [currentMatch characterAtIndex:0];
-                BOOL isId = first == '#', isCssClass = first == '.', isObjCClass = !isId && !isCssClass;
-                if ((isId && [dom view: matchView hasCssId: currentMatch]) ||
-                    (isCssClass && [dom view: matchView hasCssClass: currentMatch]) ||
+                BOOL isObjCClass = (first != '#' && first != '.');
+                if ((!isObjCClass && [dom view: matchView hasShortSelector: currentMatch]) ||
                     (isObjCClass && [NSStringFromClass([matchView class]) isEqualToString:currentMatch])) {
                     ruleIx--;
                 } else if (mustMatch) {

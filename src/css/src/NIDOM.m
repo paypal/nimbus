@@ -192,30 +192,16 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
--(BOOL)view:(UIView *)view hasCssClass:(NSString *)cssClass
+- (BOOL)view: (UIView*) view hasShortSelector: (NSString*) shortSelector
 {
   NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
-  if ([selectors containsObject:cssClass]) {
+  if ([selectors containsObject:shortSelector]) {
     return YES;
   }
 
   NSMutableArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
-  return [pseudoSelectors containsObject:cssClass];
+  return [pseudoSelectors containsObject:shortSelector];
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(BOOL)view:(UIView *)view hasCssId:(NSString *)cssId
-{
-  NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
-  if ([selectors containsObject:cssId]) {
-    return YES;
-  }
-
-  NSMutableArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
-  return [pseudoSelectors containsObject:cssId];
-
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)addCssClasses:(NSArray *)cssClasses toView:(UIView *)view {
