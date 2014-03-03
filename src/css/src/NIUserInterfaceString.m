@@ -61,6 +61,39 @@ NIUserInterfaceStringResolver
 @end
 
 ////////////////////////////////////////////////////////////////////////////////
+@implementation NIUserInterfaceStringAttachment
++(void)attach: (NSString*) value withControlState:(UIControlState)controlState element:(id)element setter:(SEL)setter
+{
+  NSInvocation *inv = [NSInvocation invocationWithMethodSignature:[element methodSignatureForSelector:setter]];
+  [inv setSelector:setter];
+  [inv setTarget:element];
+  [inv setArgument:&value atIndex:2]; //this is the string to set (0 and 1 are self and message respectively)
+  [inv setArgument:&controlState atIndex:3];
+  [inv invoke];
+}
+
+////////////////////////////////////////////////////////////////////////////////
++(void)attach: (NSString*) value element:(id)element setter:(SEL)setter
+{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+  [element performSelector:setter withObject:value];
+#pragma clang diagnostic pop
+}
+
+////////////////////////////////////////////////////////////////////////////////
+-(void)attach: (NSString*) value
+{
+  if (self.setterIsWithControlState) {
+    [[self class] attach:value withControlState:_controlState element:_element setter:_setter];
+  } else {
+    [[self class] attach:value element:_element setter:_setter];
+
+  }
+}
+@end
+
+////////////////////////////////////////////////////////////////////////////////
 @implementation NIUserInterfaceString
 
 +(void)setStringResolver:(id<NIUserInterfaceStringResolver>)stringResolver
@@ -132,14 +165,15 @@ NIUserInterfaceStringResolver
 ////////////////////////////////////////////////////////////////////////////////
 -(void)attach:(id)element withSelector:(SEL)selector withControlState: (UIControlState) state hasControlState: (BOOL) hasControlState
 {
-  NIUserInterfaceStringAttachment *attachment = [[NIUserInterfaceStringAttachment alloc] init];
-  attachment.element = element;
-  attachment.controlState = state;
-  attachment.setterIsWithControlState = hasControlState;
-  attachment.setter = selector;
-  
+
   // If we're keeping track of attachments, set all that up. Else just call the selector
   if ([[NIUserInterfaceString stringResolver] isChangeTrackingEnabled]) {
+    NIUserInterfaceStringAttachment *attachment = [[NIUserInterfaceStringAttachment alloc] init];
+    attachment.element = element;
+    attachment.controlState = state;
+    attachment.setterIsWithControlState = hasControlState;
+    attachment.setter = selector;
+
     NSMutableDictionary *viewMap =  self.viewMap;
     @synchronized (viewMap) {
       // Call this first, because if there's an existing association, it will detach it in dealloc
@@ -162,8 +196,15 @@ NIUserInterfaceStringResolver
         [a addObject: attachment];
       }
     }
+
+    [attachment attach: _string];
+  } else {
+    if (hasControlState) {
+      [NIUserInterfaceStringAttachment attach:_string withControlState:state element:element setter:selector];
+    } else {
+      [NIUserInterfaceStringAttachment attach:_string element:element setter:selector];
+    }
   }
-  [attachment attach: _string];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -298,25 +339,6 @@ NIUserInterfaceStringResolver
 }
 @end
 
-////////////////////////////////////////////////////////////////////////////////
-@implementation NIUserInterfaceStringAttachment
--(void)attach: (NSString*) value
-{
-  if (self.setterIsWithControlState) {
-    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:[_element methodSignatureForSelector:_setter]];
-    [inv setSelector:_setter];
-    [inv setTarget:_element];
-    [inv setArgument:&value atIndex:2]; //this is the string to set (0 and 1 are self and message respectively)
-    [inv setArgument:&_controlState atIndex:3];
-    [inv invoke];
-  } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-    [_element performSelector:_setter withObject:value];
-#pragma clang diagnostic pop
-  }
-}
-@end
 
 ////////////////////////////////////////////////////////////////////////////////
 @implementation NIUserInterfaceStringDeallocTracker
