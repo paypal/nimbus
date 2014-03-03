@@ -69,12 +69,11 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
 
 // Designated initializer.
 
-- (id)initWithStylesheet:(NIStylesheet *)stylesheet;
+- (id)initWithStylesheets:(NSArray *)stylesheets;
+
 
 + (id)domWithStylesheet:(NIStylesheet *)stylesheet;
-+ (id)domWithStylesheetWithPathPrefix:(NSString *)pathPrefix paths:(NSString *)path, ...;
-
-+ (id)domWithStylesheet:(NIStylesheet *)stylesheet andParentStyles: (NIStylesheet*) parentStyles;
++ (id)domWithStylesheets:(NSArray *)stylesheets;
 
 - (void)registerView:(UIView *)view;
 - (void)registerView:(UIView *)view withCSSClass:(NSString *)cssClass;
@@ -83,8 +82,7 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
 - (void)addCssClass:(NSString *)cssClass toView:(UIView*) view;
 - (void)addCssClasses:(NSArray *)cssClasses toView:(UIView *)view;
 - (void)removeCssClass: (NSString*) cssClass fromView: (UIView*) view;
-- (BOOL)view: (UIView*) view hasCssClass: (NSString*) cssClass;
-- (BOOL)view: (UIView*) view hasCssId: (NSString*) cssId;
+- (BOOL)view: (UIView*) view hasShortSelector: (NSString*) shortSelector;
 
 - (void)unregisterView:(UIView *)view;
 - (void)unregisterAllViews;
@@ -95,9 +93,6 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
 - (BOOL)isRefreshing;
 
 -(UIView*)viewById: (NSString*) viewId;
-
--(NSString*) descriptionForView: (UIView*) view withName: (NSString*) viewName;
--(NSString*) descriptionForAllViews;
 
 @property (nonatomic,unsafe_unretained) id target;
 @end
@@ -114,21 +109,6 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
  * Returns an autoreleased DOM initialized with the given stylesheet.
  *
  *      @fn NIDOM::domWithStylesheet:
- */
-
-/**
- * Returns an autoreleased DOM initialized with a nil-terminated list of file paths.
- *
- *      @fn NIDOM::domWithStylesheetWithPathPrefix:paths:
- */
-
-/**
- * Returns an autoreleased DOM initialized with the given stylesheet and a "parent" stylesheet
- * that runs first. Doing this rather than compositing stylesheets can save memory and improve
- * performance in the common case where you have a set of global styles and a bunch of view
- * or view controller specific style sheets.
- *
- *      @fn NIDOM::domWithStylesheet:andParentStyles:
  */
 
 /** @name Registering Views */
@@ -257,22 +237,4 @@ _dom = [[NIDOM alloc] initWithStylesheet:stylesheet];
  * build calls if you wanted to.
  *
  *      @fn NIDOM::target
- */
-
-/** @name Debugging */
-
-/**
- * Describe what would be done to view given the existing registrations for it. In other words, you
- * must call one of the register view variants first before asking for a description. The current
- * implementations return actual objective-c code, using viewName as the target. This allows you to
- * theoretically replace the CSS infrastructure with generated code, if you choose to. More importantly,
- * it allows you to debug what's happening with view styling.
- *
- *      @fn NIDOM::descriptionForView:withName:
- */
-
-/**
- * Call descriptionForView for all registered views, in the order they would be applied during refresh
- *
- *      @fn NIDOM::descriptionForAllViews
  */

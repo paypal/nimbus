@@ -19,17 +19,21 @@
 #import "NIStylesheet.h"
 #import "NIStyleable.h"
 #import "NimbusCore.h"
+#import "NICSSRuleset.h"
 #import <objc/runtime.h>
 
 #if !defined(__has_feature) || !__has_feature(objc_arc)
 #error "Nimbus requires ARC support."
 #endif
 
-@interface NIDOM ()
-@property (nonatomic,strong) NIStylesheet* stylesheet;
+static const int numPreallocatedRulesets = 200;
+@interface NIDOM () {
+  NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
+}
+@property (nonatomic, assign) int preallocatedRulesetIndex;
+@property (nonatomic,strong) NSArray* stylesheets;
 @property (nonatomic,strong) NSMutableArray* registeredViews;
 @property (nonatomic,strong) NSMutableDictionary* idToViewMap;
-@property (nonatomic,strong) NIDOM *parent;
 @property (nonatomic,strong) NSMutableSet *refreshedViews;
 @end
 
@@ -41,48 +45,19 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 + (id)domWithStylesheet:(NIStylesheet *)stylesheet {
-  return [[self alloc] initWithStylesheet:stylesheet];
+  return [[self alloc] initWithStylesheets:@[stylesheet]];
 }
 
++ (id)domWithStylesheets:(NSArray *)stylesheets {
+  return [[self alloc] initWithStylesheets:stylesheets];
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-+ (id)domWithStylesheetWithPathPrefix:(NSString *)pathPrefix paths:(NSString *)path, ... {
-  va_list ap;
-  va_start(ap, path);
-  
-  NIStylesheet* compositeStylesheet = [[NIStylesheet alloc] init];
-  
-  while (nil != path) {
-    NIDASSERT([path isKindOfClass:[NSString class]]);
-    
-    if ([path isKindOfClass:[NSString class]]) {
-      NIStylesheet* stylesheet = [[NIStylesheet alloc] init];
-      if ([stylesheet loadFromPath:path pathPrefix:pathPrefix]) {
-        [compositeStylesheet addStylesheet:stylesheet];
-      }
-    }
-    path = va_arg(ap, NSString*);
-  }
-  va_end(ap);
-  
-  return [[self alloc] initWithStylesheet:compositeStylesheet];
-}
-
-+(id)domWithStylesheet:(NIStylesheet *)stylesheet andParentStyles:(NIStylesheet *)parentStyles
-{
-  NIDOM *dom = [[self alloc] initWithStylesheet:stylesheet];
-  if (parentStyles) {
-    dom.parent = [NIDOM domWithStylesheet:parentStyles andParentStyles:nil];
-  }
-  return dom;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (id)initWithStylesheet:(NIStylesheet *)stylesheet {
+- (id)initWithStylesheets:(NSArray *)stylesheets {
   if ((self = [super init])) {
-    _stylesheet = stylesheet;
+    _stylesheets = [stylesheets copy];
     _registeredViews = [NSMutableArray array];
+    [self setupPreallocatedRulesets];
   }
   return self;
 }
@@ -97,12 +72,64 @@
 #pragma mark - Styling Views
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)refreshStyleForView:(UIView *)view withSelectorName:(NSString *)selectorName {
-  if (self.parent) {
-    [self.parent.stylesheet applyStyleToView:view withClassName:selectorName inDOM:self];
+-(void)setupPreallocatedRulesets {
+  for (int i = 0; i < numPreallocatedRulesets; i++) {
+    _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
   }
-  [_stylesheet applyStyleToView:view withClassName:selectorName inDOM:self];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(NICSSRuleset *)getRuleset {
+  NICSSRuleset *r;
+  if (self.preallocatedRulesetIndex < numPreallocatedRulesets) {
+    r = _preallocatedRulesets[self.preallocatedRulesetIndex];
+  } else {
+    r = [[[NIStylesheet rulesetClass] alloc] init];
+  }
+  
+  [r reset];
+  self.preallocatedRulesetIndex++;
+  return r;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(void)resetPreallocatedRulesetIndex {
+  self.preallocatedRulesetIndex = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)refreshStyleForView:(UIView *)view {
+  NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
+  NSArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
+
+
+  NICSSRuleset *ruleset = [self getRuleset];
+  for (NIStylesheet *stylesheet in self.stylesheets) {
+    [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self];
+  }
+  [self applyRuleSet:ruleset toView:view];
+
+
+  for (NSString *pseudoSelector in pseudoSelectors) {
+    if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
+      NSRange r = [pseudoSelector rangeOfString:@":"];
+
+      NICSSRuleset *ruleset = [self getRuleset];
+      for (NIStylesheet *stylesheet in self.stylesheets) {
+        [stylesheet addStylesForView:view withSelectors:@[pseudoSelector] toRuleset:ruleset inDOM:self];
+      }
+      [(id<NIStyleable>)view applyStyleWithRuleSet:ruleset
+                                    forPseudoClass:[pseudoSelector substringFromIndex:r.location+1]
+                                             inDOM:self];
+    }
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)applyRuleSet:(NICSSRuleset *)ruleSet toView:(UIView *)view {
+  if ([view respondsToSelector:@selector(applyStyleWithRuleSet:inDOM:)]) {
+    [(id<NIStyleable>)view applyStyleWithRuleSet:ruleSet inDOM:self];
+  }
 }
 
 
@@ -111,16 +138,26 @@
 #pragma mark - Public Methods
 
 static char niDOM_ViewSelectorsKey = 0;
+static char niDOM_ViewPseudoSelectorsKey = 1;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)registerSelector:(NSString *)selector withView:(UIView *)view {
-  
-  NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
-  if (!selectors) {
-    selectors = [[NSMutableArray alloc] init];
-    objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, selectors, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+  if ([selector rangeOfString:@":"].length) {
+    NSMutableArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
+    if (!pseudoSelectors) {
+      pseudoSelectors = [[NSMutableArray alloc] init];
+      objc_setAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey, pseudoSelectors, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    [pseudoSelectors addObject:selector];
+  } else {
+    NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
+    if (!selectors) {
+      selectors = [[NSMutableArray alloc] init];
+      objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, selectors, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    [selectors addObject:selector];
   }
-  [selectors addObject:selector];
-  
+
 #ifdef NI_DEBUG_CSS_SELECTOR_TARGET
     // Put a description of the selectors for this view in accessibilityHint (for example)
     // for things like RevealApp to read. Example preprocessor define
@@ -144,9 +181,6 @@ static char niDOM_ViewSelectorsKey = 0;
 - (void)registerView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
 
-  if (self.parent) {
-    [self.parent registerView:view];
-  }
   NSString* selector = NSStringFromClass([view class]);
   [self registerSelector:selector withView:view];
   
@@ -176,18 +210,13 @@ static char niDOM_ViewSelectorsKey = 0;
   NSArray *pseudos = nil;
   if (viewId) {
     if (![viewId hasPrefix:@"#"]) { viewId = [@"#" stringByAppendingString:viewId]; }
-    if (self.parent) {
-      [self.parent registerSelector:viewId withView:view];
-    }
+
     [self registerSelector:viewId withView:view];
     
     if ([view respondsToSelector:@selector(pseudoClasses)]) {
       pseudos = (NSArray*) [view performSelector:@selector(pseudoClasses)];
       if (pseudos) {
         for (NSString *ps in pseudos) {
-          if (self.parent) {
-            [self.parent registerSelector:[viewId stringByAppendingString:ps] withView:view];
-          }
           [self registerSelector:[viewId stringByAppendingString:ps] withView:view];
         }
       }
@@ -205,9 +234,6 @@ static char niDOM_ViewSelectorsKey = 0;
 - (void)registerView:(UIView *)view withCSSClass:(NSString *)cssClass registerMainView: (BOOL) registerMainView
 {
   if (registerMainView) {
-    if (self.parent) {
-      [self.parent registerView:view withCSSClass:cssClass registerMainView:NO];
-    }
     [self registerView:view];
   }
   
@@ -222,19 +248,16 @@ static char niDOM_ViewSelectorsKey = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
--(BOOL)view:(UIView *)view hasCssClass:(NSString *)cssClass
+- (BOOL)view: (UIView*) view hasShortSelector: (NSString*) shortSelector
 {
   NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
-  return [selectors containsObject:cssClass];
-}
+  if ([selectors containsObject:shortSelector]) {
+    return YES;
+  }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(BOOL)view:(UIView *)view hasCssId:(NSString *)cssId
-{
-  NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
-  return [selectors containsObject:cssId];
+  NSMutableArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
+  return [pseudoSelectors containsObject:shortSelector];
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)addCssClasses:(NSArray *)cssClasses toView:(UIView *)view {
@@ -269,14 +292,11 @@ static char niDOM_ViewSelectorsKey = 0;
 -(void)removeCssClass:(NSString *)cssClass fromView:(UIView *)view
 {
   NSString* selector = [cssClass hasPrefix:@"."] ? cssClass : [@"." stringByAppendingString:cssClass];
-  NSString* pseudoBase = [selector stringByAppendingString:@":"];
   NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   if (selectors) {
-    // Iterate over the selectors finding the id selector (if any) so we can
-    // also remove it from the id map
     for (int i = selectors.count-1; i >= 0; i--) {
       NSString *s = [selectors objectAtIndex:i];
-      if ([s isEqualToString:selector] && [pseudoBase hasPrefix:s]) {
+      if ([s isEqualToString:selector]) {
         [selectors removeObjectAtIndex:i];
       }
     }
@@ -297,17 +317,19 @@ static char niDOM_ViewSelectorsKey = 0;
       }
     }
   }
-    objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    if ([view respondsToSelector:@selector(didUnregisterInDOM:)]) {
-        [((id<NIStyleable>)view) didUnregisterInDOM:self];
-    }
+  objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  objc_setAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  if ([view respondsToSelector:@selector(didUnregisterInDOM:)]) {
+    [((id<NIStyleable>)view) didUnregisterInDOM:self];
+  }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)unregisterAllViews {
   [_registeredViews enumerateObjectsUsingBlock:^(UIView *view, NSUInteger idx, BOOL *stop) {
-      objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, &niDOM_ViewSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     if ([view respondsToSelector:@selector(didUnregisterInDOM:)]) {
       [((id<NIStyleable>)view) didUnregisterInDOM:self];
     }
@@ -320,12 +342,11 @@ static char niDOM_ViewSelectorsKey = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refresh {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
+  [self resetPreallocatedRulesetIndex];
   self.refreshedViews = [[NSMutableSet alloc] initWithCapacity:_registeredViews.count+1];
   for (UIView* view in _registeredViews) {
     [self.refreshedViews addObject:view];
-    for (NSString* selector in objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey)) {
-      [self refreshStyleForView:view withSelectorName:selector];
-    }
+    [self refreshStyleForView:view];
   }
   self.refreshedViews = nil;
 }
@@ -333,11 +354,10 @@ static char niDOM_ViewSelectorsKey = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
+  [self resetPreallocatedRulesetIndex];
   self.refreshedViews = [[NSMutableSet alloc] init];
   [self.refreshedViews addObject:view];
-  for (NSString* selector in objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey)) {
-    [self refreshStyleForView:view withSelectorName:selector];
-  }
+  [self refreshStyleForView:view];
   self.refreshedViews = nil;
 }
 
@@ -347,9 +367,7 @@ static char niDOM_ViewSelectorsKey = 0;
   if ([self.refreshedViews containsObject:view]) {
     return;
   }
-  for (NSString* selector in objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey)) {
-    [self refreshStyleForView:view withSelectorName:selector];
-  }
+  [self refreshStyleForView:view];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,56 +375,6 @@ static char niDOM_ViewSelectorsKey = 0;
 {
   if (![viewId hasPrefix:@"#"]) { viewId = [@"#" stringByAppendingString:viewId]; }
   return [_idToViewMap objectForKey:viewId.lowercaseString];
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(NSString *)descriptionForView:(UIView *)view withName:(NSString *)viewName
-{
-  NSMutableString *description = [[NSMutableString alloc] init];
-  BOOL appendedStyleInfo = NO;
-  
-  for (NSString *selector in objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey)) {
-    BOOL appendedSelectorInfo = NO;
-    NSString *additional = nil;
-    if (self.parent) {
-      additional = [self.parent.stylesheet descriptionForView: view withClassName: selector inDOM:self andViewName: viewName];
-      if (additional && additional.length) {
-        if (!appendedStyleInfo) { appendedStyleInfo = YES; [description appendFormat:@"// Styles for %@\n", viewName]; }
-        if (!appendedSelectorInfo) { appendedSelectorInfo = YES; [description appendFormat:@"// Selector %@\n", selector]; }
-        [description appendString:additional];
-      }
-    }
-    additional = [_stylesheet descriptionForView:view withClassName: selector inDOM:self andViewName: viewName];
-    if (additional && additional.length) {
-      if (!appendedStyleInfo) { appendedStyleInfo = YES; [description appendFormat:@"// Styles for %@\n", viewName]; }
-      if (!appendedSelectorInfo) { [description appendFormat:@"// Selector %@\n", selector]; }
-      [description appendString:additional];
-    }
-  }
-  return description;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(NSString *)descriptionForAllViews {
-  NSMutableString *description = [[NSMutableString alloc] init];
-  int viewCount = 0;
-  for (UIView *view in _registeredViews) {
-    [description appendString:@"\n///////////////////////////////////////////////////////////////////////////////////////////////////\n"];
-    viewCount++;
-    // This is a little hokey - because we don't get individual view names we have to come up with some.
-    __block NSString *vid = nil;
-    [objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey) enumerateObjectsUsingBlock:^(NSString *selector, NSUInteger idx, BOOL *stop) {
-      if ([selector hasPrefix:@"#"]) {
-        vid = [selector substringFromIndex:1];
-        *stop = YES;
-      }
-    }];
-    if (vid) {
-      [description appendFormat:@"UIView *%@_%d = [dom viewById: @\"#%@\"];\n", [view class], viewCount, vid];
-    }
-    [description appendString:[self descriptionForView:view withName:[NSString stringWithFormat:@"%@_%d", [view class], viewCount]]];
-  }
-  return description;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

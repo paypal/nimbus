@@ -192,6 +192,7 @@ typedef enum {
  */
 + (NSSet*) knownCssProperties;
 
+- (void)reset;
 - (void)addEntriesFromDictionary:(NSDictionary *)dictionary;
 - (id)cssRuleForKey: (NSString*)key;
 

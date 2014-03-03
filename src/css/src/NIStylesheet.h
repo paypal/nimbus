@@ -51,7 +51,6 @@ extern NSString* const NIStylesheetDidChangeNotification;
 @interface NIStylesheet : NSObject {
 @private
   NSDictionary* _rawRulesets;
-  NSMutableDictionary* _ruleSets;
   NSDictionary* _significantScopeToScopes;
 }
 
@@ -63,11 +62,10 @@ extern NSString* const NIStylesheetDidChangeNotification;
 - (BOOL)loadFromPath:(NSString *)path pathPrefix:(NSString *)path;
 - (BOOL)loadFromPath:(NSString *)path;
 
+
+- (void)addStylesForView:(UIView *)view withSelectors:(NSArray *)selectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom;
+
 - (void)addStylesheet:(NIStylesheet *)stylesheet;
-
-- (void)applyStyleToView:(UIView *)view withClassName:(NSString *)className inDOM: (NIDOM*)dom;
-
-- (NSString*)descriptionForView:(UIView *)view withClassName:(NSString *)className inDOM: (NIDOM*)dom andViewName: (NSString*) viewName;
 
 - (NICSSRuleset *)rulesetForClassName:(NSString *)className;
 

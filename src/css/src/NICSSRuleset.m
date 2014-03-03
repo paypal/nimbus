@@ -149,15 +149,20 @@ return _##name; \
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)reset {
+  [self reduceMemory];
+  [_ruleset removeAllObjects];
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)addEntriesFromDictionary:(NSDictionary *)dictionary {
-  NSMutableArray* order = [_ruleset objectForKey:kPropertyOrderKey];
+  NSMutableArray* oldOrder = [_ruleset objectForKey:kPropertyOrderKey] ?: [NSMutableArray array];
+  NSMutableArray* newOrder = [dictionary objectForKey:kPropertyOrderKey];
+
   [_ruleset addEntriesFromDictionary:dictionary];
 
-  if (nil != order) {
-    [order removeObjectsInArray:[dictionary objectForKey:kPropertyOrderKey]];
-    [order addObjectsFromArray:[dictionary objectForKey:kPropertyOrderKey]];
-    [_ruleset setObject:order forKey:kPropertyOrderKey];
-  }
+  [oldOrder addObjectsFromArray:newOrder];
+
+  [_ruleset setObject:oldOrder forKey:kPropertyOrderKey];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
