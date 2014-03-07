@@ -1448,7 +1448,7 @@ RULE_ELEMENT(accessibilityTraits, AccessibilityTraits, @"-mobile-accessibility-t
   NSString *value = [cssValues objectAtIndex:0];
   ENUM_CHECK(@"none", UITextAutocapitalizationTypeNone);
   ENUM_CHECK(@"words", UITextAutocapitalizationTypeWords);
-  ENUM_CHECK(@"sentencnes", UITextAutocapitalizationTypeSentences);
+  ENUM_CHECK(@"sentences", UITextAutocapitalizationTypeSentences);
   ENUM_CHECK(@"all", UITextAutocapitalizationTypeAllCharacters);
   NIDERROR(@"Unknown autocapitalization type %@", value);
   return UITextAutocapitalizationTypeNone;
