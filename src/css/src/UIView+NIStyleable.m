@@ -29,6 +29,8 @@
 #error "Nimbus requires ARC support."
 #endif
 
+const char niView_DOMSetKey = 0;
+
 NSString* const NICSSViewKey = @"view";
 NSString* const NICSSViewIdKey = @"id";
 NSString* const NICSSViewCssClassKey = @"cssClass";
@@ -39,6 +41,7 @@ NSString* const NICSSViewSubviewsKey = @"subviews";
 NSString* const NICSSViewAccessibilityLabelKey = @"label";
 NSString* const NICSSViewBackgroundColorKey = @"bg";
 NSString* const NICSSViewHiddenKey = @"hidden";
+
 
 /**
  * Private class for storing info during view creation
@@ -64,6 +67,29 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 @implementation UIView (NIStyleable)
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)didRegisterInDOM:(NIDOM *)dom {
+  NSMutableSet *set = objc_getAssociatedObject(self, &niView_DOMSetKey);
+  if (!set) {
+    set = NICreateNonRetainingMutableSet();
+    objc_setAssociatedObject(self, &niView_DOMSetKey, set, OBJC_ASSOCIATION_RETAIN);
+  }
+  [set addObject:dom];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)didUnregisterInDOM:(NIDOM *)dom {
+  NSMutableSet *set = objc_getAssociatedObject(self, &niView_DOMSetKey);
+  [set removeObject:dom];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (NSString *)cssDescription {
+  NSMutableSet *set = objc_getAssociatedObject(self, &niView_DOMSetKey);
+  return [((NIDOM *)[set anyObject]) infoForView:self];
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)applyViewStyleWithRuleSet:(NICSSRuleset *)ruleSet {

@@ -55,6 +55,7 @@ extern NSString* const NIStylesheetDidChangeNotification;
 }
 
 @property (nonatomic, readonly, copy) NSSet* dependencies;
+@property (nonatomic, readonly, strong) NSString *filePath;
 
 - (BOOL)loadFromPath:(NSString *)path
           pathPrefix:(NSString *)pathPrefix
@@ -63,7 +64,7 @@ extern NSString* const NIStylesheetDidChangeNotification;
 - (BOOL)loadFromPath:(NSString *)path;
 
 
-- (void)addStylesForView:(UIView *)view withSelectors:(NSArray *)selectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom;
+- (NSString *)addStylesForView:(UIView *)view withSelectors:(NSArray *)selectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom shouldReturnDescription:(BOOL)shouldReturnDescription;
 
 - (void)addStylesheet:(NIStylesheet *)stylesheet;
 

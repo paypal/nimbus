@@ -153,6 +153,7 @@ static id<NICSSResourceResolverDelegate> _resolver;
   BOOL loadDidSucceed = NO;
 
   @synchronized(self) {
+    _filePath = path;
     _rawRulesets = nil;
     _significantScopeToScopes = nil;
 
@@ -241,14 +242,16 @@ static id<NICSSResourceResolverDelegate> _resolver;
 }
 
 static NSMutableArray * matchingSelectors;
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
-- (void)addStylesForView:(UIView *)view withSelectors:(NSArray *)shortSelectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom {
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (NSString *)addStylesForView:(UIView *)view withSelectors:(NSArray *)shortSelectors toRuleset:(NICSSRuleset *)ruleset inDOM:(NIDOM *)dom shouldReturnDescription:(BOOL)shouldReturnDescription {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     matchingSelectors = [NSMutableArray array];
   });
   [matchingSelectors removeAllObjects];
+
 
   for (NSString *selector in shortSelectors) {
 
@@ -289,7 +292,18 @@ static NSMutableArray * matchingSelectors;
       }
     }
   }
+
   [self addRulesForSelectors:matchingSelectors toRuleset:ruleset];
+
+  if (shouldReturnDescription) {
+    NSMutableString *description = [NSMutableString new];
+    [matchingSelectors enumerateObjectsUsingBlock:^(NSString *selector, NSUInteger idx, BOOL *stop) {
+      [description appendFormat:@"   %@\n", selector];
+    }];
+    return description;
+  }
+
+  return nil;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

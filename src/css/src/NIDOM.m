@@ -98,17 +98,42 @@ static const int numPreallocatedRulesets = 200;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+- (NSString *)infoForView:(UIView *)view {
+  NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
+
+  NSMutableString *styleDescription = [NSMutableString new];
+  // Add classes and ids to the style description
+  [selectors enumerateObjectsUsingBlock:^(NSString *sel, NSUInteger idx, BOOL *stop) {
+    [styleDescription appendFormat:@"%@, ", sel];
+  }];
+  [styleDescription appendString:@"\n"];
+
+  NICSSRuleset *ruleset = [self getRuleset];
+  for (NIStylesheet *stylesheet in self.stylesheets) {
+    NSString *selectorDescription = [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self shouldReturnDescription:YES];
+    // Add matching selectors per stylesheet to the style description
+    [styleDescription appendFormat:@"Selectors from <%@> ::\n", stylesheet.filePath];
+    [styleDescription appendString:selectorDescription];
+  }
+
+  // Add composite ruleset to the style description
+  [styleDescription appendFormat:@"Composite ruleset:\n"];
+  [styleDescription appendFormat:@"%@", ruleset];
+
+  return styleDescription;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshStyleForView:(UIView *)view {
   NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   NSArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
 
-
   NICSSRuleset *ruleset = [self getRuleset];
   for (NIStylesheet *stylesheet in self.stylesheets) {
-    [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self];
+      [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self shouldReturnDescription:NO];
   }
-  [self applyRuleSet:ruleset toView:view];
 
+  [self applyRuleSet:ruleset toView:view];
 
   for (NSString *pseudoSelector in pseudoSelectors) {
     if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
@@ -116,7 +141,7 @@ static const int numPreallocatedRulesets = 200;
 
       NICSSRuleset *ruleset = [self getRuleset];
       for (NIStylesheet *stylesheet in self.stylesheets) {
-        [stylesheet addStylesForView:view withSelectors:@[pseudoSelector] toRuleset:ruleset inDOM:self];
+        [stylesheet addStylesForView:view withSelectors:@[pseudoSelector] toRuleset:ruleset inDOM:self shouldReturnDescription:NO];
       }
       [(id<NIStyleable>)view applyStyleWithRuleSet:ruleset
                                     forPseudoClass:[pseudoSelector substringFromIndex:r.location+1]
@@ -157,23 +182,6 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
     }
     [selectors addObject:selector];
   }
-
-#ifdef NI_DEBUG_CSS_SELECTOR_TARGET
-    // Put a description of the selectors for this view in accessibilityHint (for example)
-    // for things like RevealApp to read. Example preprocessor define
-    // NI_DEBUG_CSS_SELECTOR_TARGET=setAccessibilityHint
-    __block NSMutableString *selString = [[NSMutableString alloc] init];
-    NSString *className = NSStringFromClass([view class]);
-    [selectors enumerateObjectsUsingBlock:^(NSString *s, NSUInteger idx, BOOL *stop) {
-        if (![s isEqualToString:className] && [s rangeOfString:@":"].location == NSNotFound) {
-            if (selString.length != 0) {
-                [selString appendString:@", "];
-            }
-            [selString appendString:s];
-        }
-    }];
-    [view NI_DEBUG_CSS_SELECTOR_TARGET: selString];
-#endif
 }
 
 

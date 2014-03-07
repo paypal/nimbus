@@ -19,6 +19,8 @@
 @class NICSSRuleset;
 @class NIDOM;
 
+extern const char niView_DOMSetKey;
+
 extern NSString* const NICSSViewKey; // view
 extern NSString* const NICSSViewIdKey; // id
 extern NSString* const NICSSViewCssClassKey; // cssClass
@@ -31,6 +33,8 @@ extern NSString* const NICSSViewBackgroundColorKey; // bg
 extern NSString* const NICSSViewHiddenKey; // hidden
 
 @interface UIView (NIStyleable)
+
+- (NSString *)cssDescription;
 
 /**
  * Applies the given rule set to this view. Call applyViewStyleWithRuleSet:inDOM: instead.
