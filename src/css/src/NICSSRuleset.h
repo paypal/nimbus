@@ -185,6 +185,12 @@ typedef enum {
     int64_t _data;
   } _is;
 }
+/**
+ * Initialize and reduce memory on a memory warning notification. If you init without calling this method
+ * then you should call reduceMemory when you receive a memory warning.
+ */
+- (id)initAndRegisterForMemoryWarnings;
+- (void)reduceMemory;
 
 + (UIColor*) colorFromString: (NSString*) colorValue;
 /**

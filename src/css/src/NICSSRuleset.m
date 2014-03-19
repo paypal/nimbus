@@ -70,6 +70,8 @@ static NSDictionary* sColorTable = nil;
 + (NSDictionary *)colorTable;
 + (UIColor *)colorFromCssValues:(NSArray *)cssValues numberOfConsumedTokens:(NSInteger *)pNumberOfConsumedTokens;
 + (UITextAlignment)textAlignmentFromCssValues:(NSArray *)cssValues;
+
+@property (nonatomic) BOOL registeredOnNotificationCenter;
 @end
 
 
@@ -124,7 +126,9 @@ return _##name; \
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc {
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (self.registeredOnNotificationCenter) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+    }
 }
 
 
@@ -132,15 +136,22 @@ return _##name; \
 - (id)init {
   if ((self = [super init])) {
     _ruleset = [[NSMutableDictionary alloc] init];
-
-    NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
-    [nc addObserver: self
-           selector: @selector(didReceiveMemoryWarning:)
-               name: UIApplicationDidReceiveMemoryWarningNotification
-             object: nil];
   }
   return self;
 }
+
+- (id)initAndRegisterForMemoryWarnings {
+    if ((self = [self init])) {
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        [nc addObserver: self
+               selector: @selector(didReceiveMemoryWarning:)
+                   name: UIApplicationDidReceiveMemoryWarningNotification
+                 object: nil];
+        self.registeredOnNotificationCenter = YES;
+    }
+    return self;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
