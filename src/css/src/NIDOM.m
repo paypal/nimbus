@@ -26,11 +26,88 @@
 #error "Nimbus requires ARC support."
 #endif
 
-static const int numPreallocatedRulesets = 200;
-@interface NIDOM () {
-  NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
+static const int numPreallocatedRulesets = 1000;
+static int refreshDepth = 0;
+
+@interface NICSSRulesetAllocator : NSObject {
+    int _rulesetIndex;
+    NICSSRuleset* _preallocatedRulesets[numPreallocatedRulesets];
 }
-@property (nonatomic, assign) int preallocatedRulesetIndex;
+
++ (instancetype)sharedAllocator;
+- (NICSSRuleset*)getRuleset;
+- (void)reset;
+
+@end
+
+@implementation NICSSRulesetAllocator
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
++ (NICSSRulesetAllocator*)sharedAllocator {
+	static dispatch_once_t pred;
+	static NICSSRulesetAllocator* shared = nil;
+	dispatch_once(&pred, ^{ shared = [[self alloc] init]; });
+	return shared;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (id)init {
+    if ((self = [super init])) {
+        for (int i = 0; i < numPreallocatedRulesets; i++) {
+            _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
+        }
+        _rulesetIndex = 0;
+
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        [nc addObserver: self
+               selector: @selector(didReceiveMemoryWarning:)
+                   name: UIApplicationDidReceiveMemoryWarningNotification
+                 object: nil];
+    }
+
+    return self;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)didReceiveMemoryWarning:(void*)object {
+    for (int i = 0; i < numPreallocatedRulesets; i++) {
+        [_preallocatedRulesets[i] reduceMemory];
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+-(NICSSRuleset *)getRuleset {
+    NICSSRuleset *r;
+    if (_rulesetIndex < numPreallocatedRulesets) {
+        r = _preallocatedRulesets[_rulesetIndex];
+    } else {
+        r = [[NIStylesheet rulesetClass] alloc];
+        if ([r respondsToSelector:@selector(initAndRegisterForMemoryWarnings)]) {
+            r = [r initAndRegisterForMemoryWarnings];
+        } else {
+            r = [r init];
+        }
+    }
+
+    [r reset];
+    _rulesetIndex++;
+    return r;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)reset {
+    _rulesetIndex = 0;
+}
+
+@end
+
+
+@interface NIDOM ()
 @property (nonatomic,strong) NSArray* stylesheets;
 @property (nonatomic,strong) NSMutableArray* registeredViews;
 @property (nonatomic,strong) NSMutableDictionary* idToViewMap;
@@ -57,45 +134,18 @@ static const int numPreallocatedRulesets = 200;
   if ((self = [super init])) {
     _stylesheets = [stylesheets copy];
     _registeredViews = [NSMutableArray array];
-    [self setupPreallocatedRulesets];
   }
   return self;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc {
-    [self unregisterAllViews];
+  [self unregisterAllViews];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Styling Views
-
-
--(void)setupPreallocatedRulesets {
-  for (int i = 0; i < numPreallocatedRulesets; i++) {
-    _preallocatedRulesets[i] = [[[NIStylesheet rulesetClass] alloc] init];
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(NICSSRuleset *)getRuleset {
-  NICSSRuleset *r;
-  if (self.preallocatedRulesetIndex < numPreallocatedRulesets) {
-    r = _preallocatedRulesets[self.preallocatedRulesetIndex];
-  } else {
-    r = [[[NIStylesheet rulesetClass] alloc] init];
-  }
-  
-  [r reset];
-  self.preallocatedRulesetIndex++;
-  return r;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
--(void)resetPreallocatedRulesetIndex {
-  self.preallocatedRulesetIndex = 0;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (NSString *)infoForView:(UIView *)view {
@@ -108,7 +158,7 @@ static const int numPreallocatedRulesets = 200;
   }];
   [styleDescription appendString:@"\n"];
 
-  NICSSRuleset *ruleset = [self getRuleset];
+  NICSSRuleset *ruleset = [[NICSSRulesetAllocator sharedAllocator] getRuleset];
   for (NIStylesheet *stylesheet in self.stylesheets) {
     NSString *selectorDescription = [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self shouldReturnDescription:YES];
     // Add matching selectors per stylesheet to the style description
@@ -128,7 +178,7 @@ static const int numPreallocatedRulesets = 200;
   NSArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   NSArray *pseudoSelectors = objc_getAssociatedObject(view, &niDOM_ViewPseudoSelectorsKey);
 
-  NICSSRuleset *ruleset = [self getRuleset];
+  NICSSRuleset *ruleset = [[NICSSRulesetAllocator sharedAllocator] getRuleset];
   for (NIStylesheet *stylesheet in self.stylesheets) {
       [stylesheet addStylesForView:view withSelectors:selectors toRuleset:ruleset inDOM:self shouldReturnDescription:NO];
   }
@@ -139,7 +189,7 @@ static const int numPreallocatedRulesets = 200;
     if ([view respondsToSelector:@selector(applyStyleWithRuleSet:forPseudoClass:inDOM:)]) {
       NSRange r = [pseudoSelector rangeOfString:@":"];
 
-      NICSSRuleset *ruleset = [self getRuleset];
+      NICSSRuleset *ruleset = [[NICSSRulesetAllocator sharedAllocator] getRuleset];
       for (NIStylesheet *stylesheet in self.stylesheets) {
         [stylesheet addStylesForView:view withSelectors:@[pseudoSelector] toRuleset:ruleset inDOM:self shouldReturnDescription:NO];
       }
@@ -350,23 +400,31 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refresh {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
-  [self resetPreallocatedRulesetIndex];
+  if (refreshDepth == 0) {
+    [[NICSSRulesetAllocator sharedAllocator] reset];
+  }
+  refreshDepth++;
   self.refreshedViews = [[NSMutableSet alloc] initWithCapacity:_registeredViews.count+1];
   for (UIView* view in _registeredViews) {
     [self.refreshedViews addObject:view];
     [self refreshStyleForView:view];
   }
   self.refreshedViews = nil;
+  refreshDepth--;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
-  [self resetPreallocatedRulesetIndex];
+  if (refreshDepth == 0) {
+    [[NICSSRulesetAllocator sharedAllocator] reset];
+  }
+  refreshDepth++;
   self.refreshedViews = [[NSMutableSet alloc] init];
   [self.refreshedViews addObject:view];
   [self refreshStyleForView:view];
   self.refreshedViews = nil;
+  refreshDepth--;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
