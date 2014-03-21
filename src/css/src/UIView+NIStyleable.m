@@ -42,6 +42,8 @@ NSString* const NICSSViewAccessibilityLabelKey = @"label";
 NSString* const NICSSViewBackgroundColorKey = @"bg";
 NSString* const NICSSViewHiddenKey = @"hidden";
 
+const CGFloat NICSSBadValue = -1.0f;
+
 
 /**
  * Private class for storing info during view creation
@@ -402,7 +404,39 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       }
     }
   }
-  
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // Horizontal Min/Max
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  if ([ruleSet hasMinWidth]) {
+    CGFloat min = NICSSBadValue;
+    if (ruleSet.minWidth.type == CSS_PERCENTAGE_UNIT) {
+      min = roundf(self.superview.bounds.size.width * ruleSet.minWidth.value);
+    } else if (ruleSet.minWidth.type == CSS_PIXEL_UNIT) {
+      min = NICSSUnitToPixels(ruleSet.minWidth,self.frameWidth);
+    } else {
+      NIDASSERT(NO);
+    }
+
+    if (min != NICSSBadValue && self.frameWidth < min) {
+      self.frameWidth = min;
+    }
+  }
+  if ([ruleSet hasMaxWidth]) {
+    CGFloat max = NICSSBadValue;
+    if (ruleSet.maxWidth.type == CSS_PERCENTAGE_UNIT) {
+      max = roundf(self.superview.bounds.size.width * ruleSet.maxWidth.value);
+    } else if (ruleSet.maxWidth.type == CSS_PIXEL_UNIT) {
+      max = NICSSUnitToPixels(ruleSet.maxWidth,self.frameWidth);
+    } else {
+      NIDASSERT(NO);
+    }
+
+    if (max != NICSSBadValue && self.frameWidth > max) {
+      self.frameWidth = max;
+    }
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // Horizontal Align
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -521,7 +555,39 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       }
     }
   }
-  
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // Vertical Min/Max
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  if ([ruleSet hasMinHeight]) {
+    CGFloat min = NICSSBadValue;
+    if (ruleSet.minHeight.type == CSS_PERCENTAGE_UNIT) {
+      min = roundf(self.superview.bounds.size.height * ruleSet.minHeight.value);
+    } else if (ruleSet.minHeight.type == CSS_PIXEL_UNIT) {
+      min = NICSSUnitToPixels(ruleSet.minHeight,self.frameHeight);
+    } else {
+      NIDASSERT(NO);
+    }
+
+    if (min != NICSSBadValue && self.frameHeight < min) {
+      self.frameHeight = min;
+    }
+  }
+  if ([ruleSet hasMaxHeight]) {
+    CGFloat max = NICSSBadValue;
+    if (ruleSet.maxHeight.type == CSS_PERCENTAGE_UNIT) {
+      max = roundf(self.superview.bounds.size.height * ruleSet.maxHeight.value);
+    } else if (ruleSet.maxHeight.type == CSS_PIXEL_UNIT) {
+      max = NICSSUnitToPixels(ruleSet.maxHeight,self.frameHeight);
+    } else {
+      NIDASSERT(NO);
+    }
+
+    if (max != NICSSBadValue && self.frameHeight > max) {
+      self.frameHeight = max;
+    }
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // Vertical Align
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,33 +608,9 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
     }
   }
   
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  // Min/Max width/height enforcement
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  if ([ruleSet hasMaxWidth]) {
-    CGFloat max = NICSSUnitToPixels(ruleSet.maxWidth,self.frameWidth);
-    if (self.frameWidth > max) {
-      self.frameWidth = max;
-    }
-  }
-  if ([ruleSet hasMaxHeight]) {
-    CGFloat max = NICSSUnitToPixels(ruleSet.maxHeight,self.frameHeight);
-    if (self.frameHeight > max) {
-      self.frameHeight = max;
-    }
-  }
-  if ([ruleSet hasMinWidth]) {
-    CGFloat min = NICSSUnitToPixels(ruleSet.minWidth,self.frameWidth);
-    if (self.frameWidth < min) {
-      self.frameWidth = min;
-    }
-  }
-  if ([ruleSet hasMinHeight]) {
-    CGFloat min = NICSSUnitToPixels(ruleSet.minHeight,self.frameHeight);
-    if (self.frameHeight < min) {
-      self.frameHeight = min;
-    }
-  }
+
+
+
 }
 
 - (UIView *)relativeViewFromViewSpec:(NSString *)viewSpec inDom:(NIDOM *)dom
