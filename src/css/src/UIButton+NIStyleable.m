@@ -165,31 +165,42 @@ static char nibutton_didSetupKVOKey = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)autoSize:(NICSSRuleset *)ruleSet inDOM:(NIDOM *)dom {
+
+  NSString *title = [self titleForState:UIControlStateNormal];
+  UIImage *image = [self imageForState:UIControlStateNormal];
   CGFloat newWidth = self.frameWidth, newHeight = self.frameHeight;
-  
-  if (ruleSet.hasWidth && ruleSet.width.type == CSS_AUTO_UNIT) {
-    
-    CGSize size = [[self titleForState:UIControlStateNormal]
-                   niSizeWithFont:self.titleLabel.font
-                   constrainedToSize:CGSizeMake(CGFLOAT_MAX, self.frame.size.height)];
-    newWidth = ceilf(size.width);
-  }
-  
-  if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-    CGSize sizeForOneLine = [@"." niSizeWithFont:self.titleLabel.font constrainedToSize:CGSizeMake(self.frame.size.width, CGFLOAT_MAX)];
-    float heightForOneLine = sizeForOneLine.height;
-    
-    CGSize size = [[self titleForState:UIControlStateNormal]
-                   niSizeWithFont: self.titleLabel.font
-                   constrainedToSize:CGSizeMake(self.frame.size.width, CGFLOAT_MAX)];
-    float maxHeight = (self.titleLabel.numberOfLines == 0) ? CGFLOAT_MAX : (heightForOneLine * self.titleLabel.numberOfLines);
-    
-    if (size.height > maxHeight) {
-      size.height = maxHeight;
+
+  if (title) {
+    if (ruleSet.hasWidth && ruleSet.width.type == CSS_AUTO_UNIT) {
+
+      CGSize size = [title niSizeWithFont:self.titleLabel.font constrainedToSize:CGSizeMake(CGFLOAT_MAX, self.frame.size.height)];
+      newWidth = ceilf(size.width);
     }
-    newHeight = ceilf(size.height);
+
+    if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
+      CGSize sizeForOneLine = [@"." niSizeWithFont:self.titleLabel.font constrainedToSize:CGSizeMake(self.frame.size.width, CGFLOAT_MAX)];
+      float heightForOneLine = sizeForOneLine.height;
+
+      CGSize size = [title niSizeWithFont: self.titleLabel.font constrainedToSize:CGSizeMake(self.frame.size.width, CGFLOAT_MAX)];
+      float maxHeight = (self.titleLabel.numberOfLines == 0) ? CGFLOAT_MAX : (heightForOneLine * self.titleLabel.numberOfLines);
+
+      if (size.height > maxHeight) {
+        size.height = maxHeight;
+      }
+      newHeight = ceilf(size.height);
+    }
+  } else if (image) {
+    if (ruleSet.hasWidth && ruleSet.width.type == CSS_AUTO_UNIT) {
+      CGSize size = image.size;
+      newWidth = ceilf(size.width);
+    }
+    
+    if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
+      CGSize size = image.size;
+      newHeight = ceilf(size.height);
+    }
   }
-  
+
   self.frame = CGRectMake(self.frame.origin.x,
                           self.frame.origin.y,
                           newWidth,
