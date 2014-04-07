@@ -434,6 +434,7 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
     return;
   }
   [self refreshStyleForView:view];
+  [self.refreshedViews addObject:view];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
