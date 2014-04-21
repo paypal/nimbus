@@ -279,7 +279,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       switch (rightOf.margin.type) {
         case CSS_AUTO_UNIT:
           // Align x center
-          anchor = CGPointMake(roundf(relative.frameMidX), 0);
+          anchor = CGPointMake(relative.frameMidX, 0);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
@@ -355,7 +355,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       switch (leftOf.margin.type) {
         case CSS_AUTO_UNIT:
           // Align x center
-          anchor = CGPointMake(roundf(relative.frameMidX), 0);
+          anchor = CGPointMake(relative.frameMidX, 0);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
@@ -481,7 +481,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       switch (below .margin.type) {
         case CSS_AUTO_UNIT:
           // Align y center
-          anchor = CGPointMake(0, roundf(relative.frameMidY));
+          anchor = CGPointMake(0, relative.frameMidY);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
@@ -530,12 +530,12 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       [dom ensureViewHasBeenRefreshed:relative];
       switch (above.margin.type) {
         case CSS_AUTO_UNIT:
-          // Align x center
-          anchor = CGPointMake(roundf(relative.frameMidX), 0);
+          // Align y center
+          anchor = CGPointMake(0, relative.frameMidY);
           if (self.superview != relative.superview) {
             anchor = [self convertPoint:anchor fromView:relative.superview];
           }
-          self.frameMidX = anchor.x;
+          self.frameMidY = anchor.y;
           break;
         case CSS_PERCENTAGE_UNIT:
         case CSS_PIXEL_UNIT:
@@ -773,7 +773,12 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
 CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
 {
   if (unit.type == CSS_PERCENTAGE_UNIT) {
-    return roundf(unit.value * container);
+    CGFloat value = unit.value * container;
+    // If someone has specified 100%, match the target value exactly without rounding.
+    if (unit.value != 1.0f && unit.value != -1.0f) {
+        value = roundf(value);
+    }
+    return value;
   }
   return unit.value;
 }
