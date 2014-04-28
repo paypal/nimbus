@@ -132,7 +132,7 @@
   // from the cache.
   if (self.sizeForDisplay) {
     cacheKey = [cacheKey stringByAppendingFormat:@"%@{%d,%d}",
-                NSStringFromCGSize(imageSize), contentMode, scaleOptions];
+                NSStringFromCGSize(imageSize), (int)contentMode, scaleOptions];
   }
 
   // The resulting cache key will look like:
