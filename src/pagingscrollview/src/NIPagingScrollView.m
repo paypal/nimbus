@@ -281,8 +281,8 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
 
   NSInteger currentVisiblePageIndex = [self currentVisiblePageIndex];
 
-  int firstVisiblePageIndex = boundi(currentVisiblePageIndex - 1, 0, self.numberOfPages - 1);
-  int lastVisiblePageIndex  = boundi(currentVisiblePageIndex + 1, 0, self.numberOfPages - 1);
+  NSInteger firstVisiblePageIndex = boundi(currentVisiblePageIndex - 1, 0, self.numberOfPages - 1);
+  NSInteger lastVisiblePageIndex  = boundi(currentVisiblePageIndex + 1, 0, self.numberOfPages - 1);
 
   return NSMakeRange(firstVisiblePageIndex, lastVisiblePageIndex - firstVisiblePageIndex + 1);
 }
@@ -412,7 +412,7 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
     }
 
     // Add missing pages.
-    for (int pageIndex = visiblePageRange.location;
+    for (NSInteger pageIndex = visiblePageRange.location;
          pageIndex < (NSInteger)NSMaxRange(visiblePageRange); ++pageIndex) {
       if (![self isDisplayingPageForIndex:pageIndex]) {
         [self displayPageAtIndex:pageIndex];

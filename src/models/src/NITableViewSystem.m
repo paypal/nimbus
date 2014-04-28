@@ -179,7 +179,7 @@
   
   int sectionIndex = 0;
   for (NITableViewModelSection *section in self.dataSource.sections) {
-    int foundRow = [section.rows indexOfObject:object];
+    NSInteger foundRow = [section.rows indexOfObject:object];
     
     if (foundRow != NSNotFound) {
       return [NSIndexPath indexPathForRow:foundRow inSection:sectionIndex];

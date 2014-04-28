@@ -280,7 +280,7 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
 
 -(void)netServiceDidResolveAddress:(NSNetService *)sender
 {
-    _host = [NSString stringWithFormat:@"http://%@:%d/", [sender hostName], [sender port]];
+    _host = [NSString stringWithFormat:@"http://%@:%d/", [sender hostName], (int)[sender port]];
     self.netService = nil;
     [self watchSkinChanges];
 }
