@@ -352,7 +352,7 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
   NSString* selector = [cssClass hasPrefix:@"."] ? cssClass : [@"." stringByAppendingString:cssClass];
   NSMutableArray *selectors = objc_getAssociatedObject(view, &niDOM_ViewSelectorsKey);
   if (selectors) {
-    for (int i = selectors.count-1; i >= 0; i--) {
+    for (int i = ((int)selectors.count)-1; i >= 0; i--) {
       NSString *s = [selectors objectAtIndex:i];
       if ([s isEqualToString:selector]) {
         [selectors removeObjectAtIndex:i];

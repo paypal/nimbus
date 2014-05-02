@@ -646,7 +646,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   NSMutableArray *subviews = [[NSMutableArray alloc] init];
   [self _buildSubviews:viewSpecs inDOM:dom withViewArray:subviews];
   
-  for (int ix = 0, ct = subviews.count; ix < ct; ix++) {
+  for (NSUInteger ix = 0, ct = subviews.count; ix < ct; ix++) {
     NIPrivateViewInfo *viewInfo = [subviews objectAtIndex:ix];
     NSString *firstClass = [viewInfo.cssClasses count] ? [viewInfo.cssClasses objectAtIndex:0] : nil;
     [dom registerView:viewInfo.view withCSSClass:firstClass andId:viewInfo.viewId];
@@ -662,7 +662,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
       }
     }
     if (viewInfo.cssClasses.count > 1) {
-      for (int i = 1, cct = viewInfo.cssClasses.count; i < cct; i++) {
+      for (NSUInteger i = 1, cct = viewInfo.cssClasses.count; i < cct; i++) {
         [dom addCssClass:[viewInfo.cssClasses objectAtIndex:i] toView:viewInfo.view];
       }
     }
