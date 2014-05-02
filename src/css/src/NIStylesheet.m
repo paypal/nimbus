@@ -263,7 +263,7 @@ static NSMutableArray * matchingSelectors;
       } else {
         // Ok, now we've got to walk the hierarchy looking for a match. lastObject is className, but the others are unknown
         UIView *matchView = [view superview];
-        int ruleIx = sd.orderedList.count - 2;
+        long ruleIx = ((long)sd.orderedList.count) - 2;
         while (matchView && ruleIx >= 0) {
           NSString *currentMatch = [sd.orderedList objectAtIndex:ruleIx];
           BOOL mustMatch = NO;

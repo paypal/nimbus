@@ -244,7 +244,7 @@ NIUserInterfaceStringResolver
         } else {
           // NSMutableArray*
           NSMutableArray *maps = (NSMutableArray*) existing;
-          for (int i = 0, len = maps.count; i < len; i++) {
+          for (NSUInteger i = 0, len = maps.count; i < len; i++) {
             if ([[maps objectAtIndex:i] element] == element) {
               [maps removeObjectAtIndex:i];
               break;
