@@ -722,7 +722,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
 
 - (void)setFrameMidX:(CGFloat)frameMidX
 {
-	self.frameMinX = (frameMidX - (self.frameWidth / 2.0f));
+	self.frameMinX = (frameMidX - roundf(self.frameWidth / 2.0f));
 }
 
 - (CGFloat)frameMaxX
@@ -755,7 +755,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
 
 - (void)setFrameMidY:(CGFloat)frameMidY
 {
-	self.frameMinY = (frameMidY - (self.frameHeight / 2.0f));
+	self.frameMinY = (frameMidY - roundf(self.frameHeight / 2.0f));
 }
 
 - (CGFloat)frameMaxY
