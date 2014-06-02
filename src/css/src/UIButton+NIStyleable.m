@@ -92,6 +92,8 @@ static char nibutton_didSetupKVOKey = 0;
   }
   if ([ruleSet hasTitleInsets]) { self.titleEdgeInsets = ruleSet.titleInsets; }
   if ([ruleSet hasContentInsets]) { self.contentEdgeInsets = ruleSet.contentInsets; }
+  if ([ruleSet hasHorizontalAlign]) {self.contentHorizontalAlignment = ruleSet.horizontalAlign; }
+  if ([ruleSet hasVerticalAlign]) {self.contentVerticalAlignment = ruleSet.verticalAlign; }
   if ([ruleSet hasImageInsets]) { self.imageEdgeInsets = ruleSet.imageInsets; }
   if ([ruleSet hasButtonAdjust]) {
     self.adjustsImageWhenDisabled = ((ruleSet.buttonAdjust & NICSSButtonAdjustDisabled) != 0);
