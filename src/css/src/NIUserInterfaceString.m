@@ -326,6 +326,9 @@ NIUserInterfaceStringResolver
       return overridden;
     }
   }
+  if (value == nil || [value isEqualToString:@""]) {
+    return @"";
+  }
   return NSLocalizedStringWithDefaultValue(key, nil, [NSBundle mainBundle], value, nil);
 }
 
