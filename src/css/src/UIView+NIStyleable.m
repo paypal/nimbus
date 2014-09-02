@@ -787,7 +787,9 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
 @implementation UIView (NIStyleablePrivate)
 -(void)_buildSubviews:(NSArray *)viewSpecs inDOM:(NIDOM *)dom withViewArray:(NSMutableArray *)subviews
 {
-  NIPrivateViewInfo *active = nil;
+    NIPrivateViewInfo *active = [[NIPrivateViewInfo alloc] init];
+    active.view = self;
+    [subviews addObject:active];
 	for (id directive in viewSpecs) {
     
     if ([directive isKindOfClass:[NSDictionary class]]) {
