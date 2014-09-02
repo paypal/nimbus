@@ -939,7 +939,11 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
         if ([directiveValue isKindOfClass:[NSInvocation class]]) {
           NSInvocation *n = (NSInvocation*) directiveValue;
           if ([active.view respondsToSelector:@selector(addTarget:action:forControlEvents:)]) {
-            [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventTouchUpInside];
+              if ([active.view isKindOfClass:[UIButton class]]) {
+                  [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventTouchUpInside];
+              } else {
+                  [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventEditingChanged];
+              }
           } else {
             NSString *error = [NSString stringWithFormat:@"Cannot apply NSInvocation to class %@", NSStringFromClass(active.class)];
             NSAssert(NO, error);
@@ -1013,7 +1017,11 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container)
     } else if ([directive isKindOfClass:[NSInvocation class]]) {
       NSInvocation *n = (NSInvocation*) directive;
       if ([active.view respondsToSelector:@selector(addTarget:action:forControlEvents:)]) {
-        [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventTouchUpInside];
+          if ([active.view isKindOfClass:[UIButton class]]) {
+              [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventTouchUpInside];
+          } else {
+              [((id)active.view) addTarget: n.target action: n.selector forControlEvents: UIControlEventEditingChanged];
+          }
       } else {
         NSString *error = [NSString stringWithFormat:@"Cannot apply NSInvocation to class %@", NSStringFromClass(active.class)];
         NSAssert(NO, error);
