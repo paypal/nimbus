@@ -261,6 +261,16 @@ NIUserInterfaceStringResolver
   return [NSString stringWithFormat:@"%@: %@", [super description], self.string];
 }
 
+- (BOOL)isEqual:(id)object
+{
+    return [object isKindOfClass:[NIUserInterfaceString class]] && [self.string isEqualToString:((NIUserInterfaceString *)object).string];
+}
+
+- (NSUInteger)hash
+{
+    return [self.string hash];
+}
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////
