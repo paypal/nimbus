@@ -271,4 +271,10 @@
   
   return YES;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (NSString *)description {
+  return [NSString stringWithFormat:@"%@:\n%@", [super description], self.dataSource];
+}
+
 @end
