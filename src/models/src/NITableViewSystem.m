@@ -107,7 +107,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 -(void)setDataSourceWithArray:(NSArray *)listArray {
-  [self setDataSource:[[NIMutableTableViewModel alloc] initWithListArray:listArray delegate:self]];
+    if (!self.dataSource) {
+        [self setDataSource:[[NIMutableTableViewModel alloc] initWithListArray:listArray delegate:self]];
+    } else {
+        [self.dataSource _compileDataWithListArray:listArray];
+    }
 }
 
 #pragma mark -
