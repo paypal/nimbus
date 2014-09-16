@@ -416,6 +416,9 @@ static char niDOM_ViewPseudoSelectorsKey = 1;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)refreshView:(UIView *)view {
   NIDASSERT(self.refreshedViews == nil); // You are already in the midst of a refresh. Don't do this.
+  if (!view) {
+      return;
+  }
   if (refreshDepth == 0) {
     [[NICSSRulesetAllocator sharedAllocator] reset];
   }
