@@ -29,7 +29,7 @@
  * @param target The target that was attached to the NIActions instance.
  * @param indexPath The index path of the object.
  */
-typedef BOOL (^NIActionBlock)(id object, id target, NSIndexPath* indexPath);
+typedef BOOL (^NIActionBlock)(id object, id self, NSIndexPath* indexPath);
 
 /**
  * The NIActions class provides a generic interface for attaching actions to objects.
