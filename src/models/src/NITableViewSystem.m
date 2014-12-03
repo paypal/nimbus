@@ -43,6 +43,7 @@
 - (void)dealloc {
     [_tableView removeObserver:self forKeyPath:@"delegate"];
     _tableView.delegate = nil;
+    _tableView.dataSource = nil;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
