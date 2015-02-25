@@ -239,7 +239,7 @@
 // - (void)deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:(UITableViewRowAnimation)animation
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)insertTableItem:(id)object atIndex:(int)index withRowAnimation:(UITableViewRowAnimation)animation {
+- (void)insertTableItem:(id)object atIndex:(NSUInteger)index withRowAnimation:(UITableViewRowAnimation)animation {
   [self insertTableItem:object
             atIndexPath:[NSIndexPath indexPathForRow:index inSection:0]
        withRowAnimation:animation];
