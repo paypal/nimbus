@@ -83,7 +83,7 @@
 - (NSString *)description {
   NSMutableString *desc = [NSMutableString string];
   [self.sections enumerateObjectsUsingBlock:^(NITableViewModelSection *section, NSUInteger idx, BOOL *stop) {
-    [desc appendFormat:@"  Section %d: %@\n", idx, section];
+    [desc appendFormat:@"  Section %lu: %@\n", (unsigned long)idx, section];
   }];
   return desc;
 }
