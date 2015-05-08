@@ -1033,8 +1033,8 @@ CGSize NISizeOfAttributedStringConstrainedToSize(NSAttributedString *attributedS
   // If the user moves their finger within the link beyond a certain gutter amount, reset the
   // hold timer. The user must hold their finger still for the long press interval in order for
   // the long press action to fire.
-  if (fabsf(self.touchPoint.x - point.x) >= kLongPressGutter
-      || fabsf(self.touchPoint.y - point.y) >= kLongPressGutter) {
+  if (fabs(self.touchPoint.x - point.x) >= kLongPressGutter
+      || fabs(self.touchPoint.y - point.y) >= kLongPressGutter) {
     [self.longPressTimer invalidate];
     self.longPressTimer = nil;
     if (nil != self.touchedLink) {
