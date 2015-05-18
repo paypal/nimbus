@@ -373,37 +373,36 @@
       }
 
       NSURLRequest *request = [NSURLRequest requestWithURL:url];
-      AFImageRequestOperation *operation =
-      [AFImageRequestOperation imageRequestOperationWithRequest:request imageProcessingBlock:
-       ^UIImage *(UIImage *downloadedImage) {
-         return [NIImageProcessing imageFromSource:downloadedImage
-                                   withContentMode:contentMode
-                                          cropRect:cropRect
-                                       displaySize:displaySize
-                                      scaleOptions:self.scaleOptions
-                              interpolationQuality:self.interpolationQuality];
-
-       } success:^(NSURLRequest *successfulRequest, NSHTTPURLResponse *response, UIImage *processedImage) {
-         [self _didFinishLoadingWithImage:processedImage
-                          cacheIdentifier:pathToNetworkImage
-                              displaySize:displaySize
-                              contentMode:contentMode
-                             scaleOptions:self.scaleOptions
-                           expirationDate:nil];
-
-       } failure:^(NSURLRequest *errorRequest, NSHTTPURLResponse *response, NSError *error) {
-         [self _didFailToLoadWithError:error];
-       }];
-        
-      [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
-          if ([self.delegate respondsToSelector:@selector(networkImageView:readBytes:totalBytes:)]) {
-              [self.delegate networkImageView:self readBytes:totalBytesRead totalBytes:totalBytesExpectedToRead];
-          }
-      }];
-
+      AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+      AFImageResponseSerializer *serializer = [AFImageResponseSerializer serializer];
+      serializer.imageScale = 1;
+      
       // We handle image scaling ourselves in the image processing method, so we need to disable
       // AFNetworking from doing so as well.
-      operation.imageScale = 1;
+      operation.responseSerializer = serializer;
+      
+      [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, UIImage *downloadedImage) {
+        UIImage *processedImage = [NIImageProcessing imageFromSource:downloadedImage
+                                                     withContentMode:contentMode
+                                                            cropRect:cropRect
+                                                         displaySize:displaySize
+                                                        scaleOptions:self.scaleOptions
+                                                interpolationQuality:self.interpolationQuality];
+        [self _didFinishLoadingWithImage:processedImage
+                         cacheIdentifier:pathToNetworkImage
+                             displaySize:displaySize
+                             contentMode:contentMode
+                            scaleOptions:self.scaleOptions
+                          expirationDate:nil];
+      } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        [self _didFailToLoadWithError:error];
+      }];
+      
+      [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+        if ([self.delegate respondsToSelector:@selector(networkImageView:readBytes:totalBytes:)]) {
+          [self.delegate networkImageView:self readBytes:totalBytesRead totalBytes:totalBytesExpectedToRead];
+        }
+      }];
 
       self.operation = operation;
 
