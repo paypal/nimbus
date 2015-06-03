@@ -49,7 +49,7 @@ NI_FIX_CATEGORY_BUG(UITextView_NIStyleable)
 -(void)applyTextViewStyleWithRuleSet:(NICSSRuleset*)ruleSet inDOM:(NIDOM*)dom
 {
     if ([ruleSet hasTextColor]) { self.textColor = ruleSet.textColor; }
-    if ([ruleSet hasTextAlignment]) { self.textAlignment = ruleSet.textAlignment; }
+    if ([ruleSet hasTextAlignment]) { self.textAlignment = (NSTextAlignment)ruleSet.textAlignment; }
     if ([ruleSet hasFont]) { self.font = ruleSet.font; }
     if ([ruleSet hasReturnKeyType]) { self.returnKeyType = ruleSet.returnKeyType; }
     if ([ruleSet hasKeyboardType]) { self.keyboardType = ruleSet.keyboardType; }
