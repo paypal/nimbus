@@ -547,14 +547,11 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
   if (nil != sliderElement.didChangeSelector && nil != sliderElement.didChangeTarget
       && [sliderElement.didChangeTarget respondsToSelector:sliderElement.didChangeSelector]) {
 
-    // This throws a warning a seclectors that the compiler do not know about cannot be
-    // memory managed by ARC
-    //[sliderElement.didChangeTarget performSelector:sliderElement.didChangeSelector
-    //                                    withObject:_sliderControl];
-
-    // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(sliderElement.didChangeTarget, 
-                 sliderElement.didChangeSelector, _sliderControl);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    [sliderElement.didChangeTarget performSelector:sliderElement.didChangeSelector
+                                        withObject:_sliderControl];
+#pragma clang diagnostic pop
   }
 }
 
@@ -648,13 +645,12 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
   if (nil != segmentedControlElement.didChangeSelector && nil != segmentedControlElement.didChangeTarget
       && [segmentedControlElement.didChangeTarget respondsToSelector:segmentedControlElement.didChangeSelector]) {
-
-    // [segmentedControlElement.didChangeTarget performSelector:segmentedControlElement.didChangeSelector
-    //                                               withObject:_segmentedControl];
-
-    // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(segmentedControlElement.didChangeTarget, 
-                 segmentedControlElement.didChangeSelector, _segmentedControl);
+      
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+     [segmentedControlElement.didChangeTarget performSelector:segmentedControlElement.didChangeSelector
+                                                   withObject:_segmentedControl];
+#pragma clang diagnostic pop
   }
 }
 
@@ -849,11 +845,11 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
   
   if (nil != datePickerElement.didChangeSelector && nil != datePickerElement.didChangeTarget
       && [datePickerElement.didChangeTarget respondsToSelector:datePickerElement.didChangeSelector]) {
-    // [datePickerElement.didChangeTarget performSelector:datePickerElement.didChangeSelector withObject:self.datePicker];
+      
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+      [datePickerElement.didChangeTarget performSelector:datePickerElement.didChangeSelector withObject:self.datePicker];
 
-    // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(datePickerElement.didChangeTarget, 
-                 datePickerElement.didChangeSelector, _datePicker);
 
   }
 }
