@@ -29,42 +29,6 @@
 #error "Nimbus requires ARC support."
 #endif
 
-static NSString* const kTextColorKey = @"color";
-static NSString* const kHighlightedTextColorKey = @"-ios-highlighted-color";
-static NSString* const kTextAlignmentKey = @"text-align";
-static NSString* const kFontKey = @"font";
-static NSString* const kFontSizeKey = @"font-size";
-static NSString* const kFontStyleKey = @"font-style";
-static NSString* const kFontWeightKey = @"font-weight";
-static NSString* const kFontFamilyKey = @"font-family";
-static NSString* const kTextShadowKey = @"text-shadow";
-static NSString* const kLineBreakModeKey = @"-ios-line-break-mode";
-static NSString* const kNumberOfLinesKey = @"-ios-number-of-lines";
-static NSString* const kMinimumFontSizeKey = @"-ios-minimum-font-size";
-static NSString* const kAdjustsFontSizeKey = @"-ios-adjusts-font-size";
-static NSString* const kBaselineAdjustmentKey = @"-ios-baseline-adjustment";
-static NSString* const kOpacityKey = @"opacity";
-static NSString* const kBackgroundColorKey = @"background-color";
-static NSString* const kBorderRadiusKey = @"border-radius";
-static NSString* const kBorderKey = @"border";
-static NSString* const kBorderColorKey = @"border-color";
-static NSString* const kBorderWidthKey = @"border-width";
-static NSString* const kTintColorKey = @"-ios-tint-color";
-static NSString* const kActivityIndicatorStyleKey = @"-ios-activity-indicator-style";
-static NSString* const kAutoresizingKey = @"-ios-autoresizing";
-static NSString* const kTableViewCellSeparatorStyleKey = @"-ios-table-view-cell-separator-style";
-static NSString* const kScrollViewIndicatorStyleKey = @"-ios-scroll-view-indicator-style";
-static NSString* const kPaddingKey = @"padding";
-static NSString* const kHPaddingKey = @"-mobile-hpadding";
-static NSString* const kVPaddingKey = @"-mobile-vpadding";
-
-// IF YOU ADD A CSS KEY - go add it to knownKeys in the +initialize method
-// so that we can warn when there are unknown values
-static NSSet* sKnownKeys = nil;
-
-// This color table is generated on-demand and is released when a memory warning is encountered.
-static NSDictionary* sColorTable = nil;
-
 @interface NICSSRuleset()
 // Instantiates the color table if it does not already exist.
 + (NSDictionary *)colorTable;
