@@ -57,7 +57,7 @@ typedef enum {
  * are removed from every stylesheet.
  */
 @interface NICSSRuleset : NSObject {
-@private
+
   NSMutableDictionary* _ruleset;
   
   UIColor* _textColor;
