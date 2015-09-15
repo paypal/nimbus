@@ -94,6 +94,7 @@ static NSDictionary* sColorTable = nil;
  * are removed from every stylesheet.
  */
 @interface NICSSRuleset : NSObject {
+
   NSMutableDictionary* _ruleset;
   
   UIColor* _textColor;
