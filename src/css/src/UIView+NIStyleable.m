@@ -442,13 +442,13 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   if ([ruleSet hasFrameHorizontalAlign]) {
     switch (ruleSet.frameHorizontalAlign) {
-      case UITextAlignmentCenter:
+      case NSTextAlignmentCenter:
         self.frameMidX = roundf(self.superview.bounds.size.width / 2.0);
         break;
-      case UITextAlignmentLeft:
+      case NSTextAlignmentLeft:
         self.frameMinX = 0;
         break;
-      case UITextAlignmentRight:
+      case NSTextAlignmentRight:
         self.frameMaxX = self.superview.bounds.size.width;
         break;
       default:

@@ -33,7 +33,7 @@
 // Instantiates the color table if it does not already exist.
 + (NSDictionary *)colorTable;
 + (UIColor *)colorFromCssValues:(NSArray *)cssValues numberOfConsumedTokens:(NSInteger *)pNumberOfConsumedTokens;
-+ (UITextAlignment)textAlignmentFromCssValues:(NSArray *)cssValues;
++ (NSTextAlignment)textAlignmentFromCssValues:(NSArray *)cssValues;
 
 @property (nonatomic) BOOL registeredOnNotificationCenter;
 @end
@@ -189,7 +189,7 @@ return _##name; \
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (UITextAlignment)textAlignment {
+- (NSTextAlignment)textAlignment {
   NIDASSERT([self hasTextAlignment]);
   if (!_is.cached.TextAlignment) {
     _textAlignment = [[self class] textAlignmentFromCssValues:[_ruleset objectForKey:kTextAlignmentKey]];
@@ -681,7 +681,7 @@ RULE_ELEMENT(leftOf, LeftOf, @"-mobile-left-of", NICSSRelativeSpec*, relativeSpe
 RULE_ELEMENT(rightOf, RightOf, @"-mobile-right-of", NICSSRelativeSpec*, relativeSpecFromCssValues)
 RULE_ELEMENT(above, Above, @"-mobile-above", NICSSRelativeSpec*, relativeSpecFromCssValues)
 RULE_ELEMENT(below, Below, @"-mobile-below", NICSSRelativeSpec*, relativeSpecFromCssValues)
-RULE_ELEMENT(frameHorizontalAlign,FrameHorizontalAlign,@"-mobile-halign",UITextAlignment,textAlignmentFromCssValues)
+RULE_ELEMENT(frameHorizontalAlign,FrameHorizontalAlign,@"-mobile-halign",NSTextAlignment,textAlignmentFromCssValues)
 RULE_ELEMENT(frameVerticalAlign,FrameVerticalAlign,@"-mobile-valign",UIViewContentMode,verticalAlignFromCssValues)
 RULE_ELEMENT(backgroundStretchInsets,BackgroundStretchInsets,@"-mobile-background-stretch",UIEdgeInsets,edgeInsetsFromCssValues)
 RULE_ELEMENT(backgroundImage,BackgroundImage,@"background-image", NSString*,imageStringFromCssValues)
@@ -1336,11 +1336,11 @@ RULE_ELEMENT(accessibilityTraits, AccessibilityTraits, @"-mobile-accessibility-t
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-+ (UITextAlignment)textAlignmentFromCssValues:(NSArray *)cssValues {
++ (NSTextAlignment)textAlignmentFromCssValues:(NSArray *)cssValues {
   NIDASSERT([cssValues count] == 1);
   if ([cssValues count] < 1) {
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < NIIOS_6_0
-    return UITextAlignmentLeft;
+    return NSTextAlignmentLeft;
 #else
     return NSTextAlignmentLeft;
 #endif
@@ -1348,15 +1348,15 @@ RULE_ELEMENT(accessibilityTraits, AccessibilityTraits, @"-mobile-accessibility-t
 
   NSString* value = [cssValues objectAtIndex:0];
 
-  UITextAlignment textAlignment = UITextAlignmentLeft;
+  NSTextAlignment textAlignment = NSTextAlignmentLeft;
   
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < NIIOS_6_0
   if ([value isEqualToString:@"center"]) {
-    textAlignment = UITextAlignmentCenter;
+    textAlignment = NSTextAlignmentCenter;
   } else if ([value isEqualToString:@"right"]) {
-    textAlignment = UITextAlignmentRight;
+    textAlignment = NSTextAlignmentRight;
   } else if ([value isEqualToString:@"left"]) {
-    textAlignment = UITextAlignmentLeft;
+    textAlignment = NSTextAlignmentLeft;
   } else {
     NIDERROR(@"Unknown horizontal alignment %@", value);
   }
