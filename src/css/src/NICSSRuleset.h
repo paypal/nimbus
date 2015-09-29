@@ -94,11 +94,12 @@ static NSDictionary* sColorTable = nil;
  * are removed from every stylesheet.
  */
 @interface NICSSRuleset : NSObject {
+
   NSMutableDictionary* _ruleset;
   
   UIColor* _textColor;
   UIColor* _highlightedTextColor;
-  UITextAlignment _textAlignment;
+  NSTextAlignment _textAlignment;
   UIFont* _font;
   UIColor* _textShadowColor;
   CGSize _textShadowOffset;
@@ -120,7 +121,7 @@ static NSDictionary* sColorTable = nil;
   UIViewAutoresizing _autoresizing;
   UITableViewCellSeparatorStyle _tableViewCellSeparatorStyle;
   UIScrollViewIndicatorStyle _scrollViewIndicatorStyle;
-  UITextAlignment _frameHorizontalAlign;
+  NSTextAlignment _frameHorizontalAlign;
   UIViewContentMode _frameVerticalAlign;
   UIControlContentVerticalAlignment _verticalAlign;
   UIControlContentHorizontalAlignment _horizontalAlign;
@@ -245,7 +246,7 @@ static NSDictionary* sColorTable = nil;
 - (UIColor *)highlightedTextColor;
 
 - (BOOL)hasTextAlignment;
-- (UITextAlignment)textAlignment; // text-align
+- (NSTextAlignment)textAlignment; // text-align
 
 - (BOOL)hasFont;
 - (UIFont *)font; // font, font-family, font-size, font-style, font-weight
@@ -344,7 +345,7 @@ static NSDictionary* sColorTable = nil;
 - (UIControlContentHorizontalAlignment)horizontalAlign; // -mobile-content-halign
 
 - (BOOL)hasFrameHorizontalAlign;
-- (UITextAlignment)frameHorizontalAlign; // -mobile-halign
+- (NSTextAlignment)frameHorizontalAlign; // -mobile-halign
 
 - (BOOL)hasFrameVerticalAlign;
 - (UIViewContentMode)frameVerticalAlign; // -mobile-valign
