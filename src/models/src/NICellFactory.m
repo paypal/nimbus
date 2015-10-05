@@ -49,8 +49,14 @@
                          tableView:(UITableView *)tableView
                             object:(id)object {
   UITableViewCell* cell = nil;
-
-  NSString* identifier = NSStringFromClass(cellClass);
+    
+    
+    NSString* identifier;
+    if ([object respondsToSelector:@selector(reuseIdentifier)]) {
+        identifier = [object performSelector:@selector(reuseIdentifier)];
+    } else {
+        identifier = NSStringFromClass(cellClass);
+    }
 
   if ([cellClass respondsToSelector:@selector(shouldAppendObjectClassToReuseIdentifier)]
       && [cellClass shouldAppendObjectClassToReuseIdentifier]) {
