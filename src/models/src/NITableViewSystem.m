@@ -235,7 +235,6 @@
 }
 
 // TODO: Finish creating methods to provide functionality that these do:
-// - (void)insertRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:(UITableViewRowAnimation)animation
 // - (void)deleteRowsAtIndexPaths:(NSArray *)indexPaths withRowAnimation:(UITableViewRowAnimation)animation
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,8 +246,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)insertTableItem:(id)object atIndexPath:(NSIndexPath *)indexPath withRowAnimation:(UITableViewRowAnimation)animation {
-    
-  NSArray *indexPaths = [self.dataSource insertObject:object atRow:indexPath.row inSection:indexPath.section];
+    return [self insertTableItems:@[object] atIndexPath:indexPath withRowAnimation:animation];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)insertTableItems:(NSArray *)objects atIndexPath:(NSIndexPath *)indexPath withRowAnimation:(UITableViewRowAnimation)animation {
+  NSArray *indexPaths = [self.dataSource insertObjects:objects atRow:indexPath.row inSection:indexPath.section];
   
   // Update the table
   [self.tableView beginUpdates];

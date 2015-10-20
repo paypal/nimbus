@@ -78,6 +78,8 @@
 - (BOOL)reloadCellForTableItem:(id)object withRowAnimation:(UITableViewRowAnimation)rowAnimation;
 - (BOOL)reloadCellsForTableItems:(NSArray *)objects withRowAnimation:(UITableViewRowAnimation)rowAnimation;
 
+
+- (void)insertTableItems:(NSArray *)objects atIndexPath:(NSIndexPath *)indexPath withRowAnimation:(UITableViewRowAnimation)animation;
 - (void)insertTableItem:(id)object atIndex:(NSUInteger)index withRowAnimation:(UITableViewRowAnimation)animation;
 - (void)insertTableItem:(id)object atIndexPath:(NSIndexPath *)indexPath withRowAnimation:(UITableViewRowAnimation)animation;
 

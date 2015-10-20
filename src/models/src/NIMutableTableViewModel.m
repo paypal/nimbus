@@ -65,10 +65,22 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)insertObject:(id)object atRow:(NSUInteger)row inSection:(NSUInteger)sectionIndex {
-  NIDASSERT(sectionIndex >= 0 && sectionIndex < self.sections.count);
-  NITableViewModelSection *section = [self.sections objectAtIndex:sectionIndex];
-  [section.mutableRows insertObject:object atIndex:row];
-  return [NSArray arrayWithObject:[NSIndexPath indexPathForRow:row inSection:sectionIndex]];
+    return [self insertObjects:@[object] atRow:row inSection:sectionIndex];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (NSArray *)insertObjects:(NSArray *)objects atRow:(NSUInteger)row inSection:(NSUInteger)sectionIndex {
+    NIDASSERT(sectionIndex >= 0 && sectionIndex < self.sections.count);
+    NITableViewModelSection *section = [self.sections objectAtIndex:sectionIndex];
+    
+    NSUInteger rowPointer = row;
+    NSMutableArray *retVal = [NSMutableArray new];
+    for (id object in objects) {
+        [section.mutableRows insertObject:object atIndex:rowPointer];
+        [retVal addObject:[NSIndexPath indexPathForRow:rowPointer inSection:sectionIndex]];
+        rowPointer++;
+    }
+    return retVal;
 }
 
 
