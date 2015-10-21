@@ -1,0 +1,188 @@
+{
+  "name": "PPHNimbus",
+  "version": "1.2.0",
+  "license": "Apache License, Version 2.0",
+  "summary": "An iOS framework whose growth is bounded by O(documentation).",
+  "homepage": "http://nimbuskit.info",
+  "documentation_url": "http://latest.docs.nimbuskit.info",
+  "authors": {
+  },
+  "source": {
+    "git": "https://github.com/djmax/nimbus.git",
+    "tag": "1.2.0"
+  },
+  "description": "Nimbus is an iOS framework whose feature set grows only as fast as its documentation. By focusing on documentation first and features second, Nimbus hopes to be a framework that accelerates the development process of any application by being easy to use and simple to understand.",
+  "platforms": {
+    "ios": "6.0"
+  },
+  "requires_arc": true,
+  "subspecs": [
+    {
+      "name": "PPHCore",
+      "source_files": "src/core/src"
+    },
+    {
+      "name": "PPHTextfield",
+      "source_files": "src/textfield/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHBadge",
+      "source_files": "src/badge/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHCollections",
+      "source_files": "src/collections/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHCSS",
+      "source_files": "src/css/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ],
+        "Nimbus/PPHTextfield": [
+
+        ],
+        "AFNetworking": [
+          "~> 2.1"
+        ]
+      },
+      "frameworks": "CoreGraphics"
+    },
+    {
+      "name": "PPHAttributedLabel",
+      "source_files": "src/attributedlabel/src",
+      "frameworks": [
+        "CoreText",
+        "CoreGraphics"
+      ],
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHInterapp",
+      "source_files": "src/interapp/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      },
+      "frameworks": "CoreLocation"
+    },
+    {
+      "name": "PPHLauncher",
+      "source_files": "src/launcher/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ],
+        "Nimbus/PPHPagingScrollView": [
+
+        ]
+      },
+      "frameworks": "CoreGraphics"
+    },
+    {
+      "name": "PPHModels",
+      "source_files": "src/models/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHCollections",
+      "source_files": "src/collections/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHNetworkControllers",
+      "source_files": "src/networkcontrollers/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHNetworkImage",
+      "source_files": "src/networkimage/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ],
+        "AFNetworking": [
+          "~> 2.1"
+        ]
+      }
+    },
+    {
+      "name": "PPHOverview",
+      "source_files": "src/overview/src",
+      "resources": "src/overview/resources/NimbusOverviewer.bundle",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ],
+        "Nimbus/PPHModels": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHPagingScrollView",
+      "source_files": "src/pagingscrollview/src",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHPhotos",
+      "source_files": "src/photos/src",
+      "resources": "src/photos/resources/NimbusPhotos.bundle",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ],
+        "Nimbus/PPHPagingScrollView": [
+
+        ]
+      }
+    },
+    {
+      "name": "PPHWebController",
+      "source_files": "src/webcontroller/src",
+      "resources": "src/webcontroller/resources/NimbusWebController.bundle",
+      "dependencies": {
+        "Nimbus/PPHCore": [
+
+        ]
+      }
+    }
+  ]
+}
