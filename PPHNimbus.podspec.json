@@ -25,8 +25,7 @@
       "name": "PPHTextfield",
       "source_files": "src/textfield/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -34,8 +33,7 @@
       "name": "PPHBadge",
       "source_files": "src/badge/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -43,8 +41,7 @@
       "name": "PPHCollections",
       "source_files": "src/collections/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -52,11 +49,9 @@
       "name": "PPHCSS",
       "source_files": "src/css/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ],
-        "Nimbus/PPHTextfield": [
-
+        "PPHNimbus/PPHTextfield": [
         ],
         "AFNetworking": [
           "~> 2.1"
@@ -72,8 +67,7 @@
         "CoreGraphics"
       ],
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -81,8 +75,7 @@
       "name": "PPHInterapp",
       "source_files": "src/interapp/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       },
       "frameworks": "CoreLocation"
@@ -91,11 +84,9 @@
       "name": "PPHLauncher",
       "source_files": "src/launcher/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ],
-        "Nimbus/PPHPagingScrollView": [
-
+        "PPHNimbus/PPHPagingScrollView": [
         ]
       },
       "frameworks": "CoreGraphics"
@@ -104,8 +95,7 @@
       "name": "PPHModels",
       "source_files": "src/models/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -113,8 +103,7 @@
       "name": "PPHCollections",
       "source_files": "src/collections/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -122,8 +111,7 @@
       "name": "PPHNetworkControllers",
       "source_files": "src/networkcontrollers/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -131,8 +119,7 @@
       "name": "PPHNetworkImage",
       "source_files": "src/networkimage/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ],
         "AFNetworking": [
           "~> 2.1"
@@ -144,11 +131,9 @@
       "source_files": "src/overview/src",
       "resources": "src/overview/resources/NimbusOverviewer.bundle",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ],
-        "Nimbus/PPHModels": [
-
+        "PPHNimbus/PPHModels": [
         ]
       }
     },
@@ -156,8 +141,7 @@
       "name": "PPHPagingScrollView",
       "source_files": "src/pagingscrollview/src",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     },
@@ -166,11 +150,9 @@
       "source_files": "src/photos/src",
       "resources": "src/photos/resources/NimbusPhotos.bundle",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ],
-        "Nimbus/PPHPagingScrollView": [
-
+        "PPHNimbus/PPHPagingScrollView": [
         ]
       }
     },
@@ -179,8 +161,7 @@
       "source_files": "src/webcontroller/src",
       "resources": "src/webcontroller/resources/NimbusWebController.bundle",
       "dependencies": {
-        "Nimbus/PPHCore": [
-
+        "PPHNimbus/PPHCore": [
         ]
       }
     }
