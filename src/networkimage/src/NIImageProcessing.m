@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2012 Jeff Verkoeyen
+// Copyright 2011-2014 NimbusKit
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,14 +108,11 @@
 
   } else {
     // Not implemented
-    NIDERROR(@"This content mode has not been implemented in the threaded network image view: %d",
-             contentMode);
+    NIDERROR(@"The following content mode has not been implemented: %zd", contentMode);
     return CGRectMake(0, 0, imageSize.width, imageSize.height);
   }
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * Calculate the destination rect in the destination image where we will draw the cropped source
  * image.
@@ -149,20 +146,17 @@
 
   } else {
     // Not implemented
-    NIDERROR(@"This content mode has not been implemented in the threaded network image view: %d",
-             contentMode);
+    NIDERROR(@"The following content mode has not been implemented: %zd", contentMode);
     return CGRectMake(0, 0, displaySize.width, displaySize.height);
   }
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-+ (UIImage *)imageFromSource: (UIImage *)src
-             withContentMode: (UIViewContentMode)contentMode
-                    cropRect: (CGRect)cropRect
-                 displaySize: (CGSize)displaySize
-                scaleOptions: (NINetworkImageViewScaleOptions)scaleOptions
-        interpolationQuality: (CGInterpolationQuality)interpolationQuality {
++ (UIImage *)imageFromSource:(UIImage *)src
+             withContentMode:(UIViewContentMode)contentMode
+                    cropRect:(CGRect)cropRect
+                 displaySize:(CGSize)displaySize
+                scaleOptions:(NINetworkImageViewScaleOptions)scaleOptions
+        interpolationQuality:(CGInterpolationQuality)interpolationQuality {
 
   UIImage* resultImage = src;
 
@@ -186,9 +180,7 @@
 
     // This new image will likely have a different width and height, so we have to update
     // the source rect as a result.
-    srcRect = CGRectMake(0, 0,
-                         CGRectGetWidth(innerRect),
-                         CGRectGetHeight(innerRect));
+    srcRect = CGRectMake(0, 0, CGRectGetWidth(innerRect), CGRectGetHeight(innerRect));
   }
 
   // Display
@@ -269,7 +261,7 @@
     // See table "Supported Pixel Formats" in the following guide for support iOS bitmap formats:
     // http://developer.apple.com/library/mac/#documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_context/dq_context.html
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGBitmapInfo bmi = kCGImageAlphaPremultipliedLast;
+    CGBitmapInfo bmi = (CGBitmapInfo)kCGImageAlphaPremultipliedLast;
 
     // For screen sizes with higher resolutions, we create a larger image with a scale value
     // so that it appears crisper on the screen.
@@ -307,14 +299,9 @@
       CGImageRef resultImageRef = CGBitmapContextCreateImage(dstBmp);
 
       if (nil != resultImageRef) {
-        if ([[UIImage class] respondsToSelector:@selector(imageWithCGImage:scale:orientation:)]) {
-          resultImage = [UIImage imageWithCGImage: resultImageRef
-                                            scale: screenScale
-                                      orientation: src.imageOrientation];
-
-        } else {
-          resultImage = [UIImage imageWithCGImage: resultImageRef];
-        }
+        resultImage = [UIImage imageWithCGImage:resultImageRef
+                                          scale:screenScale
+                                    orientation:src.imageOrientation];
         CGImageRelease(resultImageRef);
       }
 
@@ -337,6 +324,5 @@
 
   return resultImage;
 }
-
 
 @end

@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2012 Jeff Verkoeyen
+// Copyright 2011-2014 NimbusKit
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,12 +51,12 @@ typedef enum {
 @protocol NINetworkImageOperation <NSObject>
 @required
 @property (readonly, copy) NSString* cacheIdentifier;
-@property (readwrite, assign) CGRect imageCropRect;
-@property (readwrite, assign) CGSize imageDisplaySize;
-@property (readwrite, assign) NINetworkImageViewScaleOptions scaleOptions;
-@property (readwrite, assign) CGInterpolationQuality interpolationQuality;
-@property (readwrite, assign) UIViewContentMode imageContentMode;
-@property (readwrite, NI_STRONG) UIImage* imageCroppedAndSizedForDisplay;
+@property (assign) CGRect imageCropRect;
+@property (assign) CGSize imageDisplaySize;
+@property (assign) NINetworkImageViewScaleOptions scaleOptions;
+@property (assign) CGInterpolationQuality interpolationQuality;
+@property (assign) UIViewContentMode imageContentMode;
+@property (strong) UIImage* imageCroppedAndSizedForDisplay;
 @end
 
 /**
@@ -65,7 +65,7 @@ typedef enum {
  * Intelligently crops and resizes images for optimal memory use and uses threads to avoid
  * processing images on the UI thread.
  *
- *      @ingroup NimbusNetworkImage
+ * @ingroup NimbusNetworkImage
  */
 @interface NINetworkImageView : UIImageView <NIOperationDelegate>
 
@@ -75,17 +75,17 @@ typedef enum {
 
 #pragma mark Configurable Presentation Properties
 
-@property (nonatomic, readwrite, NI_STRONG) UIImage* initialImage;     // Default: nil
-@property (nonatomic, readwrite, assign) BOOL sizeForDisplay;       // Default: YES
-@property (nonatomic, readwrite, assign) NINetworkImageViewScaleOptions scaleOptions; // Default: NINetworkImageViewScaleToFitLeavesExcessAndScaleToFillCropsExcess
-@property (nonatomic, readwrite, assign) CGInterpolationQuality interpolationQuality; // Default: kCGInterpolationDefault
+@property (nonatomic, strong) UIImage* initialImage;     // Default: nil
+@property (nonatomic, assign) BOOL sizeForDisplay;       // Default: YES
+@property (nonatomic, assign) NINetworkImageViewScaleOptions scaleOptions; // Default: NINetworkImageViewScaleToFitLeavesExcessAndScaleToFillCropsExcess
+@property (nonatomic, assign) CGInterpolationQuality interpolationQuality; // Default: kCGInterpolationDefault
 
 #pragma mark Configurable Properties
 
-@property (nonatomic, readwrite, NI_STRONG) NIImageMemoryCache* imageMemoryCache;    // Default: [Nimbus imageMemoryCache]
-@property (nonatomic, readwrite, NI_STRONG) NSOperationQueue* networkOperationQueue; // Default: [Nimbus networkOperationQueue]
+@property (nonatomic, strong) NIImageMemoryCache* imageMemoryCache;    // Default: [Nimbus imageMemoryCache]
+@property (nonatomic, strong) NSOperationQueue* networkOperationQueue; // Default: [Nimbus networkOperationQueue]
 
-@property (nonatomic, readwrite, assign) NSTimeInterval maxAge;     // Default: 0
+@property (nonatomic, assign) NSTimeInterval maxAge;     // Default: 0
 
 #pragma mark Requesting a Network Image
 
@@ -108,7 +108,7 @@ typedef enum {
 
 #pragma mark Delegation
 
-@property (nonatomic, readwrite, NI_WEAK) id<NINetworkImageViewDelegate> delegate;
+@property (nonatomic, weak) id<NINetworkImageViewDelegate> delegate;
 
 #pragma mark Subclassing
 
@@ -122,7 +122,7 @@ typedef enum {
 /**
  * The image view delegate used to inform of state changes.
  *
- *      @ingroup NimbusNetworkImage
+ * @ingroup NimbusNetworkImage
  */
 @protocol NINetworkImageViewDelegate <NSObject>
 @optional
@@ -152,8 +152,8 @@ typedef enum {
 /**
  * Flags for modifying the way cropping is handled when scaling images to fit or fill.
  *
- *      @enum NINetworkImageViewScaleOptions
- *      @ingroup NimbusNetworkImage
+ * @enum NINetworkImageViewScaleOptions
+ * @ingroup NimbusNetworkImage
  *
  * By default the network image view will behave in the following way for these content modes:
  *
@@ -351,8 +351,8 @@ typedef enum {
 /**
  * Designated initializer.
  *
- *      @param image  This will be the initialImage.
- *      @fn NINetworkImageView::initWithImage:
+ * @param image  This will be the initialImage.
+ * @fn NINetworkImageView::initWithImage:
  */
 
 
@@ -371,7 +371,7 @@ typedef enum {
  * The initial image is drawn only using the view's contentMode. Cropping and resizing are only
  * performed on the image fetched from the network.
  *
- *      @fn NINetworkImageView::initialImage
+ * @fn NINetworkImageView::initialImage
  */
 
 /**
@@ -388,7 +388,7 @@ typedef enum {
  *
  * By default this is YES.
  *
- *      @fn NINetworkImageView::sizeForDisplay
+ * @fn NINetworkImageView::sizeForDisplay
  */
 
 /**
@@ -396,8 +396,8 @@ typedef enum {
  *
  * By default this is NINetworkImageViewScaleToFitLeavesExcessAndScaleToFillCropsExcess.
  *
- *      @see NINetworkImageViewScaleOptions
- *      @fn NINetworkImageView::scaleOptions
+ * @see NINetworkImageViewScaleOptions
+ * @fn NINetworkImageView::scaleOptions
  */
 
 /**
@@ -405,7 +405,7 @@ typedef enum {
  *
  * The default value is kCGInterpolationDefault.
  *
- *      @fn NINetworkImageView::interpolationQuality
+ * @fn NINetworkImageView::interpolationQuality
  */
 
 
@@ -421,16 +421,16 @@ typedef enum {
  *
  * By default this is [Nimbus imageMemoryCache].
  *
- *      @attention Setting this to nil will disable the memory cache. This will force the
+ * @attention Setting this to nil will disable the memory cache. This will force the
  *                 image view to load the image from the disk cache or network, depending on
  *                 what is available.
  *
- *      @remark If you replace Nimbus' global image memory cache with a new image cache after
+ * @remark If you replace Nimbus' global image memory cache with a new image cache after
  *              creating this image view, this image view will still use the old image cache.
  *
- *      @see Nimbus::globalImageMemoryCache
- *      @see Nimbus::setGlobalImageMemoryCache:
- *      @fn NINetworkImageView::imageMemoryCache
+ * @see Nimbus::globalImageMemoryCache
+ * @see Nimbus::setGlobalImageMemoryCache:
+ * @fn NINetworkImageView::imageMemoryCache
  */
 
 /**
@@ -441,10 +441,10 @@ typedef enum {
  *
  * By default this is [ASIDownloadCache sharedCache].
  *
- *      @attention Setting this to nil will disable the disk cache. Images downloaded from the
+ * @attention Setting this to nil will disable the disk cache. Images downloaded from the
  *                 network will be stored in the memory cache, if available.
  *
- *      @fn NINetworkImageView::imageMemoryCache
+ * @fn NINetworkImageView::imageMemoryCache
  */
 
 /**
@@ -452,29 +452,23 @@ typedef enum {
  *
  * By default this is [Nimbus networkOperationQueue].
  *
- *      @attention This property must be non-nil. If you attempt to set it to nil, a debug
+ * @attention This property must be non-nil. If you attempt to set it to nil, a debug
  *                 assertion will fire and Nimbus' global network operation queue will be set.
  *
- *      @see Nimbus::globalNetworkOperationQueue
- *      @see Nimbus::setGlobalNetworkOperationQueue:
+ * @see Nimbus::globalNetworkOperationQueue
+ * @see Nimbus::setGlobalNetworkOperationQueue:
  *
- *      @fn NINetworkImageView::networkOperationQueue
+ * @fn NINetworkImageView::networkOperationQueue
  */
 
 /**
  * The maximum amount of time that an image will stay in memory after the request completes.
  *
- * If this value is non-zero then the respone header's expiration date information will be
- * ignored in favor of using this value.
- *
- * If this value is zero then the response header's max-age value will be used if it exists,
- * otherwise it will use the Expires value if it exists.
- *
  * A negative value will cause this image to NOT be stored in the memory cache.
  *
  * By default this is 0.
  *
- *      @fn NINetworkImageView::maxAge
+ * @fn NINetworkImageView::maxAge
  */
 
 /**
@@ -495,7 +489,7 @@ typedef enum {
  *
  * By default this is NINetworkImageViewDiskCacheLifetimePermanent.
  *
- *      @fn NINetworkImageView::diskCacheLifetime
+ * @fn NINetworkImageView::diskCacheLifetime
  */
 
 /**
@@ -504,10 +498,10 @@ typedef enum {
  * This property may be used to avoid setting the network path repeatedly and clobbering
  * previous requests.
  *
- *      @note It is debatable whether this has any practical use and is being considered
+ * @note It is debatable whether this has any practical use and is being considered
  *            for removal.
  *
- *      @fn NINetworkImageView::lastPathToNetworkImage
+ * @fn NINetworkImageView::lastPathToNetworkImage
  */
 
 
@@ -518,7 +512,7 @@ typedef enum {
  *
  * If there is currently an image being fetched then this will be YES.
  *
- *      @fn NINetworkImageView::isLoading
+ * @fn NINetworkImageView::isLoading
  */
 
 
@@ -527,7 +521,7 @@ typedef enum {
 /**
  * Delegate for state change notifications.
  *
- *      @fn NINetworkImageView::delegate
+ * @fn NINetworkImageView::delegate
  */
 
 
@@ -539,7 +533,7 @@ typedef enum {
  * Prepares this view for reuse by cancelling any existing requests and displaying the
  * initial image again.
  *
- *      @fn NINetworkImageView::prepareForReuse
+ * @fn NINetworkImageView::prepareForReuse
  */
 
 
@@ -557,8 +551,8 @@ typedef enum {
  *
  * The image's current frame will be used as the display size for the image.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @fn NINetworkImageView::setPathToNetworkImage:
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @fn NINetworkImageView::setPathToNetworkImage:
  */
 
 /**
@@ -569,9 +563,9 @@ typedef enum {
  *
  * Uses self.contentMode to crop and resize the image.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @param displaySize         Used instead of the image's frame to determine the display size.
- *      @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @param displaySize         Used instead of the image's frame to determine the display size.
+ * @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:
  */
 
 /**
@@ -580,10 +574,10 @@ typedef enum {
  * Loads the image from the memory cache if possible, otherwise fires off a network request
  * with this object's network image information.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @param displaySize         Used instead of the image's frame to determine the display size.
- *      @param contentMode         The content mode used to crop and resize the image.
- *      @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:contentMode:
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @param displaySize         Used instead of the image's frame to determine the display size.
+ * @param contentMode         The content mode used to crop and resize the image.
+ * @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:contentMode:
  */
 
 /**
@@ -596,10 +590,10 @@ typedef enum {
  *
  * The image's current frame will be used as the display size for the image.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @param cropRect            x/y, width/height are in percent coordinates.
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @param cropRect            x/y, width/height are in percent coordinates.
  *                                 Valid range is [0..1] for all values.
- *      @fn NINetworkImageView::setPathToNetworkImage:cropRect:
+ * @fn NINetworkImageView::setPathToNetworkImage:cropRect:
  */
 
 /**
@@ -610,9 +604,9 @@ typedef enum {
  *
  * The image's current frame will be used as the display size for the image.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @param contentMode         The content mode used to crop and resize the image.
- *      @fn NINetworkImageView::setPathToNetworkImage:contentMode:
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @param contentMode         The content mode used to crop and resize the image.
+ * @fn NINetworkImageView::setPathToNetworkImage:contentMode:
  */
 
 /**
@@ -621,12 +615,12 @@ typedef enum {
  * Loads the image from the memory cache if possible, otherwise fires off a network request
  * with this object's network image information.
  *
- *      @param pathToNetworkImage  The network path to the image to be displayed.
- *      @param cropRect            x/y, width/height are in percent coordinates.
+ * @param pathToNetworkImage  The network path to the image to be displayed.
+ * @param cropRect            x/y, width/height are in percent coordinates.
  *                                 Valid range is [0..1] for all values.
- *      @param displaySize         Used instead of the image's frame to determine the display size.
- *      @param contentMode         The content mode used to crop and resize the image.
- *      @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:contentMode:cropRect:
+ * @param displaySize         Used instead of the image's frame to determine the display size.
+ * @param contentMode         The content mode used to crop and resize the image.
+ * @fn NINetworkImageView::setPathToNetworkImage:forDisplaySize:contentMode:cropRect:
  */
 
 
@@ -640,17 +634,17 @@ typedef enum {
 /**
  * A network request has begun.
  *
- *      @fn NINetworkImageView::networkImageViewDidStartLoading
+ * @fn NINetworkImageView::networkImageViewDidStartLoading
  */
 
 /**
  * The image has been loaded, either from the network or in-memory.
  *
- *      @fn NINetworkImageView::networkImageViewDidLoadImage:
+ * @fn NINetworkImageView::networkImageViewDidLoadImage:
  */
 
 /**
  * A network request failed to load.
  *
- *      @fn NINetworkImageView::networkImageViewDidFailWithError:
+ * @fn NINetworkImageView::networkImageViewDidFailWithError:
  */
