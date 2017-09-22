@@ -16,7 +16,7 @@
 // limitations under the License.
 //
 
-#include "CssTokens.h"
+#include "CSSTokens.h"
 
 #line 3 "lex.css.c"
 

@@ -1102,6 +1102,8 @@ RULE_ELEMENT(accessibilityTraits, AccessibilityTraits, @"-mobile-accessibility-t
     returnUnits.type = CSS_PIXEL_UNIT;
     returnUnits.value = 0;
   } else {
+    returnUnits.type = CSS_PIXEL_UNIT;
+    returnUnits.value = 0;
     NIDERROR(@"Unknown unit: %@", unitValue);
   }
   return returnUnits;
