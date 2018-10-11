@@ -379,7 +379,7 @@
         
       [manager GET:url.absoluteString parameters:nil progress:^(NSProgress * _Nonnull downloadProgress) {
         if ([self.delegate respondsToSelector:@selector(networkImageView:readBytes:totalBytes:)]) {
-                // [self.delegate networkImageView:self readBytes:downloadProgress totalBytes:totalBytesExpectedToRead];
+                [self.delegate networkImageView:self readBytes:downloadProgress.completedUnitCount totalBytes:downloadProgress.totalUnitCount];
             }
         } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
             UIImage *processedImage = [NIImageProcessing imageFromSource:responseObject
