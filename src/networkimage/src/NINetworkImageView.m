@@ -372,42 +372,33 @@
         contentMode = UIViewContentModeScaleToFill;
       }
 
-      NSURLRequest *request = [NSURLRequest requestWithURL:url];
-      AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-      AFImageResponseSerializer *serializer = [AFImageResponseSerializer serializer];
-      serializer.imageScale = 1;
+      AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
       
       // We handle image scaling ourselves in the image processing method, so we need to disable
       // AFNetworking from doing so as well.
-      operation.responseSerializer = serializer;
-      
-      [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, UIImage *downloadedImage) {
-        UIImage *processedImage = [NIImageProcessing imageFromSource:downloadedImage
-                                                     withContentMode:contentMode
-                                                            cropRect:cropRect
-                                                         displaySize:displaySize
-                                                        scaleOptions:self.scaleOptions
-                                                interpolationQuality:self.interpolationQuality];
-        [self _didFinishLoadingWithImage:processedImage
-                         cacheIdentifier:pathToNetworkImage
-                             displaySize:displaySize
-                             contentMode:contentMode
-                            scaleOptions:self.scaleOptions
-                          expirationDate:nil];
-      } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        [self _didFailToLoadWithError:error];
-      }];
-      
-      [operation setDownloadProgressBlock:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+        
+      [manager GET:url.absoluteString parameters:nil progress:^(NSProgress * _Nonnull downloadProgress) {
         if ([self.delegate respondsToSelector:@selector(networkImageView:readBytes:totalBytes:)]) {
-          [self.delegate networkImageView:self readBytes:totalBytesRead totalBytes:totalBytesExpectedToRead];
-        }
-      }];
-
-      self.operation = operation;
+                // [self.delegate networkImageView:self readBytes:downloadProgress totalBytes:totalBytesExpectedToRead];
+            }
+        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            UIImage *processedImage = [NIImageProcessing imageFromSource:responseObject
+                                                             withContentMode:contentMode
+                                                                    cropRect:cropRect
+                                                                 displaySize:displaySize
+                                                                scaleOptions:self.scaleOptions
+                                                        interpolationQuality:self.interpolationQuality];
+            [self _didFinishLoadingWithImage:processedImage
+                                 cacheIdentifier:pathToNetworkImage
+                                     displaySize:displaySize
+                                     contentMode:contentMode
+                                    scaleOptions:self.scaleOptions
+                                  expirationDate:nil];
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            [self _didFailToLoadWithError:error];
+        }];
 
       [self _didStartLoading];
-      [self.networkOperationQueue addOperation:operation];
     }
   }
 }

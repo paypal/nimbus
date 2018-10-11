@@ -99,57 +99,53 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)downloadStylesheetWithFilename:(NSString *)path {
   NSURL* url = [NSURL URLWithString:[_host stringByAppendingString:path]];
-  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
+  AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
 
-  AFHTTPRequestOperation* requestOp = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-
-  [requestOp setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-    NSMutableArray* changedStylesheets = [NSMutableArray array];
-    NSArray* pathParts = [[operation.request.URL absoluteString] pathComponents];
-    NSString* resultPath = [[pathParts subarrayWithRange:NSMakeRange(2, [pathParts count] - 2)]
-                            componentsJoinedByString:@"/"];
-    NSString* rootPath = NIPathForDocumentsResource(nil);
-    NSString* hashedPath = [self pathFromPath:resultPath];
-    NSString* diskPath = [rootPath stringByAppendingPathComponent:hashedPath];
-    [responseObject writeToFile:diskPath atomically:YES];
-    
-    NIStylesheet* stylesheet = [_stylesheetCache stylesheetWithPath:resultPath loadFromDisk:NO];
-    if ([stylesheet loadFromPath:resultPath pathPrefix:rootPath delegate:self]) {
-      [changedStylesheets addObject:stylesheet];
-    }
-    
-    for (NSString* iteratingPath in _stylesheetPaths) {
-      stylesheet = [_stylesheetCache stylesheetWithPath:iteratingPath loadFromDisk:NO];
-      if ([stylesheet.dependencies containsObject:resultPath]) {
-        // This stylesheet has the changed stylesheet as a dependency so let's refresh it.
-        if ([stylesheet loadFromPath:iteratingPath pathPrefix:rootPath delegate:self]) {
+    [manager GET:url.absoluteString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull operation, id  _Nullable responseObject) {
+        NSMutableArray* changedStylesheets = [NSMutableArray array];
+        NSArray* pathParts = [[operation.response.URL absoluteString] pathComponents];
+        NSString* resultPath = [[pathParts subarrayWithRange:NSMakeRange(2, [pathParts count] - 2)]
+                                componentsJoinedByString:@"/"];
+        NSString* rootPath = NIPathForDocumentsResource(nil);
+        NSString* hashedPath = [self pathFromPath:resultPath];
+        NSString* diskPath = [rootPath stringByAppendingPathComponent:hashedPath];
+        [responseObject writeToFile:diskPath atomically:YES];
+        
+        NIStylesheet* stylesheet = [_stylesheetCache stylesheetWithPath:resultPath loadFromDisk:NO];
+        if ([stylesheet loadFromPath:resultPath pathPrefix:rootPath delegate:self]) {
           [changedStylesheets addObject:stylesheet];
         }
-      }
-    }
+        
+        for (NSString* iteratingPath in _stylesheetPaths) {
+          stylesheet = [_stylesheetCache stylesheetWithPath:iteratingPath loadFromDisk:NO];
+          if ([stylesheet.dependencies containsObject:resultPath]) {
+            // This stylesheet has the changed stylesheet as a dependency so let's refresh it.
+            if ([stylesheet loadFromPath:iteratingPath pathPrefix:rootPath delegate:self]) {
+              [changedStylesheets addObject:stylesheet];
+            }
+          }
+        }
 
-    NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
-    for (NIStylesheet* changedStylesheet in changedStylesheets) {
-      [nc postNotificationName:NIStylesheetDidChangeNotification
-                        object:changedStylesheet
-                      userInfo:nil];
-    }
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        for (NIStylesheet* changedStylesheet in changedStylesheets) {
+          [nc postNotificationName:NIStylesheetDidChangeNotification
+                            object:changedStylesheet
+                          userInfo:nil];
+        }
 
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
       NIDWARNING(@"Chameleon Observer Error: %@", error);
   }];
-  [_queue addOperation:requestOp];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)downloadStringsWithFilename:(NSString *)path {
   NSURL* url = [NSURL URLWithString:[_host stringByAppendingString:path]];
-  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
   
-  AFHTTPRequestOperation* requestOp = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+  AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
   
-  [requestOp setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-    NSArray* pathParts = [[operation.request.URL absoluteString] pathComponents];
+    [manager GET:url.absoluteString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull operation, id  _Nullable responseObject) {
+    NSArray* pathParts = [[operation.response.URL absoluteString] pathComponents];
     NSString* resultPath = [[pathParts subarrayWithRange:NSMakeRange(2, [pathParts count] - 2)]
                             componentsJoinedByString:@"/"];
     NSString* rootPath = NIPathForDocumentsResource(nil);
@@ -161,20 +157,17 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
     [nc postNotificationName:NIStringsDidChangeNotification object:nil userInfo:@{
         NIStringsDidChangeFilePathKey: diskPath
      }];
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
   }];
-  [_queue addOperation:requestOp];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)downloadGenericResourceWithFilename:(NSString *)path {
-    NSURL* url = [NSURL URLWithString:[_host stringByAppendingString:path]];
-    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
+    NSURL* url = [NSURL URLWithString:[_host stringByAppendingString:path]];    
+    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
     
-    AFHTTPRequestOperation* requestOp = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-    
-    [requestOp setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSArray* pathParts = [[operation.request.URL absoluteString] pathComponents];
+    [manager GET:url.absoluteString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull operation, id  _Nullable responseObject) {
+        NSArray* pathParts = [[operation.response.URL absoluteString] pathComponents];
         NSString* resultPath = [[pathParts subarrayWithRange:NSMakeRange(2, [pathParts count] - 2)]
                                 componentsJoinedByString:@"/"];
         NSString* rootPath = NIPathForDocumentsResource(nil);
@@ -187,9 +180,8 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
             NIGenericResourceDidChangeFilePathKey: diskPath,
             NIGenericResourceDidChangeNameKey: path
          }];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
     }];
-    [_queue addOperation:requestOp];
 }
 
 
@@ -226,9 +218,9 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
   NSURL* url = [NSURL URLWithString:[_host stringByAppendingString:@"watch"]];
   NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
   request.timeoutInterval = kTimeoutInterval;
-  AFHTTPRequestOperation* requestOp = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+  AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
 
-  [requestOp setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+  [manager GET:url.absoluteString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
     NSString* stringData = [[NSString alloc] initWithData:responseObject
                                                  encoding:NSUTF8StringEncoding];
 
@@ -247,7 +239,7 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
     _retryCount = 0;
     [self watchSkinChanges];
 
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
     if (_retryCount < kMaxNumberOfRetries) {
       ++_retryCount;
       
@@ -257,8 +249,6 @@ NSString* const NIGenericResourceDidChangeNameKey = @"NIGenericResourceNameKey";
       });
     }
   }];
-
-  [_queue addOperation:requestOp];
 }
 
 -(void)enableBonjourDiscovery:(NSString *)serviceName
