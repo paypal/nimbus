@@ -21,6 +21,7 @@
 #import "NimbusCore.h"
 #import "AFNetworking.h"
 #import "NIImageProcessing.h"
+#import <AFNetworking/AFImageDownloader.h>
 
 #if !defined(__has_feature) || !__has_feature(objc_arc)
 #error "Nimbus requires ARC support."
@@ -372,29 +373,22 @@
         contentMode = UIViewContentModeScaleToFill;
       }
 
-      AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-      
       // We handle image scaling ourselves in the image processing method, so we need to disable
       // AFNetworking from doing so as well.
-        
-      [manager GET:url.absoluteString parameters:nil progress:^(NSProgress * _Nonnull downloadProgress) {
-        if ([self.delegate respondsToSelector:@selector(networkImageView:readBytes:totalBytes:)]) {
-                [self.delegate networkImageView:self readBytes:downloadProgress.completedUnitCount totalBytes:downloadProgress.totalUnitCount];
-            }
-        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        [[AFImageDownloader defaultInstance] downloadImageForURLRequest:[NSURLRequest requestWithURL:url] success:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, UIImage * _Nonnull responseObject) {
             UIImage *processedImage = [NIImageProcessing imageFromSource:responseObject
-                                                             withContentMode:contentMode
-                                                                    cropRect:cropRect
-                                                                 displaySize:displaySize
-                                                                scaleOptions:self.scaleOptions
-                                                        interpolationQuality:self.interpolationQuality];
+                                                         withContentMode:contentMode
+                                                                cropRect:cropRect
+                                                             displaySize:displaySize
+                                                            scaleOptions:self.scaleOptions
+                                                    interpolationQuality:self.interpolationQuality];
             [self _didFinishLoadingWithImage:processedImage
-                                 cacheIdentifier:pathToNetworkImage
-                                     displaySize:displaySize
-                                     contentMode:contentMode
-                                    scaleOptions:self.scaleOptions
-                                  expirationDate:nil];
-        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+                             cacheIdentifier:pathToNetworkImage
+                                 displaySize:displaySize
+                                 contentMode:contentMode
+                                scaleOptions:self.scaleOptions
+                              expirationDate:nil];
+        } failure:^(NSURLRequest * _Nonnull request, NSHTTPURLResponse * _Nullable response, NSError * _Nonnull error) {
             [self _didFailToLoadWithError:error];
         }];
 
