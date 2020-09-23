@@ -336,7 +336,7 @@ NIUserInterfaceStringResolver
       return overridden;
     }
   }
-  if (value == nil || [value isEqualToString:@""]) {
+  if (value == nil || ([value isKindOfClass:NSString.class] && [value isEqualToString:@""])) {
     return @"";
   }
   return NSLocalizedStringWithDefaultValue(key, nil, [NSBundle mainBundle], value, nil);
