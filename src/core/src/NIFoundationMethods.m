@@ -90,10 +90,20 @@ CGSize NISizeOfStringWithLabelProperties(NSString *string, CGSize constrainedToS
   CGSize size = CGSizeZero;
 
   if (numberOfLines == 1) {
-    size = [string sizeWithFont:font forWidth:constrainedToSize.width lineBreakMode:lineBreakMode];
+      NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+      [style setLineBreakMode:lineBreakMode];
+      size = [string sizeWithAttributes:@{
+          NSFontAttributeName: font,
+          NSParagraphStyleAttributeName: style
+      }];
 
   } else {
-    size = [string sizeWithFont:font constrainedToSize:constrainedToSize lineBreakMode:lineBreakMode];
+      NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+      [style setLineBreakMode:lineBreakMode];
+      size = [string sizeWithAttributes:@{
+          NSFontAttributeName: font,
+          NSParagraphStyleAttributeName: style
+      }];
     if (numberOfLines > 0) {
       size.height = MIN(size.height, numberOfLines * lineHeight);
     }

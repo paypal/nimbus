@@ -266,7 +266,7 @@ CGFloat NICSSUnitToPixels(NICSSUnit unit, CGFloat container);
         self.frameMinX = NICSSUnitToPixels(u, self.superview.frameWidth);
         break;
       default:
-        NIDASSERT(u.type == CSS_PERCENTAGE_UNIT || u.type == CSS_PIXEL_UNIT);
+            NIDASSERT(u.type == CSS_PERCENTAGE_UNIT || u.type == CSS_PIXEL_UNIT);
         break;
     }
   }

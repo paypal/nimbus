@@ -57,7 +57,7 @@ NI_FIX_CATEGORY_BUG(UILabel_NIStyleable)
   }
   if ([ruleSet hasLineBreakMode]) { self.lineBreakMode = ruleSet.lineBreakMode; }
   if ([ruleSet hasNumberOfLines]) { self.numberOfLines = ruleSet.numberOfLines; }
-  if ([ruleSet hasMinimumFontSize]) { self.minimumFontSize = ruleSet.minimumFontSize; }
+//  if ([ruleSet hasMinimumFontSize]) { self.minimumFontSize = ruleSet.minimumFontSize; }
   if ([ruleSet hasAdjustsFontSize]) { self.adjustsFontSizeToFitWidth = ruleSet.adjustsFontSize; }
   if ([ruleSet hasTextAlignment]) { self.textAlignment = (NSTextAlignment)ruleSet.textAlignment; }
   if ([ruleSet hasBaselineAdjustment]) { self.baselineAdjustment = ruleSet.baselineAdjustment; }
@@ -83,7 +83,9 @@ NI_FIX_CATEGORY_BUG(UILabel_NIStyleable)
   }
   
   if (ruleSet.hasHeight && ruleSet.height.type == CSS_AUTO_UNIT) {
-    CGSize sizeForOneLine = [@"." sizeWithFont:self.font constrainedToSize:CGSizeMake(newWidth, CGFLOAT_MAX)];
+    CGSize sizeForOneLine = [@"." sizeWithAttributes: @{
+        NSFontAttributeName: self.font,
+    }];
     float heightForOneLine = sizeForOneLine.height;
     
     CGSize size = [self.text

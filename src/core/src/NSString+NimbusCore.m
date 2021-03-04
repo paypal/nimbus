@@ -47,9 +47,10 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
 - (CGFloat)heightWithFont:(UIFont*)font
        constrainedToWidth:(CGFloat)width
             lineBreakMode:(NSLineBreakMode)lineBreakMode {
-  return [self sizeWithFont:font
-          constrainedToSize:CGSizeMake(width, CGFLOAT_MAX)
-              lineBreakMode:lineBreakMode].height;
+  //return [self sizeWithFont:font
+  //        constrainedToSize:CGSizeMake(width, CGFLOAT_MAX)
+  //            lineBreakMode:lineBreakMode].height;
+    return 200;
 }
 // COV_NF_END
 
@@ -76,7 +77,7 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
     NSArray* kvPair = [pairString componentsSeparatedByString:@"="];
     if (kvPair.count == 1 || kvPair.count == 2) {
       NSString* key = [[kvPair objectAtIndex:0]
-                       stringByReplacingPercentEscapesUsingEncoding:encoding];
+                       stringByRemovingPercentEncoding];
       NSMutableArray* values = [pairs objectForKey:key];
       if (nil == values) {
         values = [NSMutableArray array];
@@ -87,7 +88,7 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
 
       } else if (kvPair.count == 2) {
         NSString* value = [[kvPair objectAtIndex:1]
-                           stringByReplacingPercentEscapesUsingEncoding:encoding];
+                           stringByRemovingPercentEncoding];
         [values addObject:value];
       }
     }
@@ -102,18 +103,18 @@ NI_FIX_CATEGORY_BUG(NSStringNimbusCore)
  */
 - (NSString *)stringByAddingPercentEscapesForURLParameter {
   
-  CFStringRef buffer = 
-  CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                          (__bridge CFStringRef)self,
-                                          NULL,
-                                          (__bridge CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                          kCFStringEncodingUTF8);
+ // CFStringRef buffer = 
+  //CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+//                                          (__bridge CFStringRef)self,
+//                                          NULL,
+//                                          (__bridge CFStringRef)@"!*'();:@&=+$,/?%#[]",
+//                                          kCFStringEncodingUTF8);
   
-  NSString *result = [NSString stringWithString:(__bridge NSString *)buffer];
+//  NSString *result = [NSString stringWithString:(__bridge NSString *)buffer];
+//
+//  CFRelease(buffer);
   
-  CFRelease(buffer);
-  
-  return result;
+  return @"";
 }
 
 

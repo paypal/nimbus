@@ -1036,27 +1036,9 @@ RULE_ELEMENT(accessibilityTraits, AccessibilityTraits, @"-mobile-accessibility-t
      [UIColor lightTextColor],                @"lightTextColor",
      [UIColor darkTextColor],                 @"darkTextColor",
      [UIColor groupTableViewBackgroundColor], @"groupTableViewBackgroundColor",
-     [UIColor viewFlipsideBackgroundColor],   @"viewFlipsideBackgroundColor",
+     //[UIColor viewFlipsideBackgroundColor],   @"viewFlipsideBackgroundColor",
      [UIColor clearColor],                    @"transparent",
      nil];
-    
-    if ([UIColor respondsToSelector:@selector(scrollViewTexturedBackgroundColor)]) {
-      // 3.2 and up
-      UIColor* color = [UIColor scrollViewTexturedBackgroundColor];
-      if (nil != color) {
-        [colorTable setObject:color
-                       forKey:@"scrollViewTexturedBackgroundColor"];
-      }
-    }
-    
-    if ([UIColor respondsToSelector:@selector(underPageBackgroundColor)]) {
-      // 5.0 and up
-      UIColor* color = [UIColor underPageBackgroundColor];
-      if (nil != color) {
-        [colorTable setObject:color
-                       forKey:@"underPageBackgroundColor"];
-      }
-    }
 
     // Replace the web colors with their system color equivalents.
     [colorTable setObject:[UIColor blackColor] forKey:@"black"];

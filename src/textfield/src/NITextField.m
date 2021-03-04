@@ -24,7 +24,11 @@
         if (self.placeholderTextColor) {
             [self.placeholderTextColor setFill];
         }
-        [self.placeholder drawInRect:rect withFont:(self.placeholderFont != nil ? self.placeholderFont : self.font) lineBreakMode:NSLineBreakByClipping alignment:self.textAlignment];
+        NSDictionary *dictionary = @{ NSFontAttributeName: self.font };
+                                      //NSLineBreakMode: NSLineBreakByClipping,
+                                      //NSTextAlignment:self.textAlignment};
+        [self.placeholder drawInRect:rect
+                            withAttributes:dictionary];
     }
     else
     {
